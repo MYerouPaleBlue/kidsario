@@ -157,6 +157,7 @@ fun HomeComponent(
     )
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 backgroundColor = MaterialTheme.colors.primary,
@@ -173,7 +174,7 @@ fun HomeComponent(
         }
     ) { paddingValues ->
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp),

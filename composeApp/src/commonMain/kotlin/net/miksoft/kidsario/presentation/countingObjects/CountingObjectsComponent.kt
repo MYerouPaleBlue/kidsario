@@ -95,6 +95,7 @@ fun CountingObjectsComponent(
     }
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 backgroundColor = MaterialTheme.colors.primary,
@@ -131,7 +132,7 @@ fun CountingObjectsComponent(
         }
     ) { paddingValues ->
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)

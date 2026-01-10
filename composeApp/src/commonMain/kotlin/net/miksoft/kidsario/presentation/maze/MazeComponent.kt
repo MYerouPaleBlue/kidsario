@@ -93,6 +93,7 @@ fun MazeComponent(
     }
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 backgroundColor = MaterialTheme.colors.primary,
@@ -135,7 +136,7 @@ fun MazeComponent(
         }
     ) { paddingValues ->
         Box(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)

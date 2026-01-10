@@ -44,6 +44,7 @@ fun DrawingLettersComponent(
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 backgroundColor = MaterialTheme.colors.primary,
@@ -70,7 +71,7 @@ fun DrawingLettersComponent(
         }
     ) { paddingValues ->
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
