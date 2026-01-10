@@ -53,6 +53,10 @@ fun App() {
             currentScreen = Screen.HOME
         }
 
+        BackHandler(enabled = currentScreen != Screen.HOME) {
+            onNavigateBack()
+        }
+
         val modifier = Modifier.padding(WindowInsets.systemBars.asPaddingValues())
 
         // Display the current screen
