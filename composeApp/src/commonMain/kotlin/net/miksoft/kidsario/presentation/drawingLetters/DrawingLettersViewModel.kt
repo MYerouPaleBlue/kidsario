@@ -30,7 +30,7 @@ class DrawingLettersViewModel : ViewModel() {
             // Generate a random character (letter or number)
             val character = generateRandomCharacter()
 
-            _uiState.value = DrawingLettersUiState(
+            _uiState.value = _uiState.value.copy(
                 character = character,
                 userDrawingPoints = emptyList(),
                 message = null,
@@ -38,6 +38,26 @@ class DrawingLettersViewModel : ViewModel() {
                 isGameActive = true
             )
         }
+    }
+
+    /**
+     * Toggle the settings dialog visibility.
+     */
+    fun toggleSettingsDialog() {
+        _uiState.value = _uiState.value.copy(
+            showSettingsDialog = !_uiState.value.showSettingsDialog
+        )
+    }
+
+    /**
+     * Change the letter type and start a new round.
+     */
+    fun changeLetterType(type: LetterType) {
+        _uiState.value = _uiState.value.copy(
+            letterType = type,
+            showSettingsDialog = false
+        )
+        startNewRound()
     }
 
     /**
@@ -113,10 +133,21 @@ class DrawingLettersViewModel : ViewModel() {
     /**
      * Generate a random character (letter or number).
      * 
-     * @return A random letter (A-Z) or number (0-9)
+     * @return A random letter or number based on settings
      */
     private fun generateRandomCharacter(): Char {
-        val characters = ('A'..'Z') + ('0'..'9')
+        val englishChars = ('A'..'Z') + ('0'..'9')
+        val greekChars = listOf(
+            'Α', 'Β', 'Γ', 'Δ', 'Ε', 'Ζ', 'Η', 'Θ', 'Ι', 'Κ', 'Λ', 'Μ', 
+            'Ν', 'Ξ', 'Ο', 'Π', 'Ρ', 'Σ', 'Τ', 'Υ', 'Φ', 'Χ', 'Ψ', 'Ω'
+        )
+        
+        val characters = when (_uiState.value.letterType) {
+            LetterType.ENGLISH -> englishChars
+            LetterType.GREEK -> greekChars
+            LetterType.BOTH -> englishChars + greekChars
+        }
+        
         return characters.random()
     }
 }
@@ -129,8 +160,19 @@ data class DrawingLettersUiState(
     val userDrawingPoints: List<DrawingPoint> = emptyList(),
     val message: String? = null,
     val isCorrectDrawing: Boolean? = null,
-    val isGameActive: Boolean = true
+    val isGameActive: Boolean = true,
+    val letterType: LetterType = LetterType.ENGLISH,
+    val showSettingsDialog: Boolean = false
 )
+
+/**
+ * Type of letters to display
+ */
+enum class LetterType(val displayName: String) {
+    ENGLISH("English (A-Z, 0-9)"),
+    GREEK("Greek (Α-Ω)"),
+    BOTH("Both")
+}
 
 /**
  * Data class representing a point in the user's drawing

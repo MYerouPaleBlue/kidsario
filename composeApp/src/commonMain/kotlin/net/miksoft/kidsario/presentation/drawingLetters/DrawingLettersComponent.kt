@@ -44,6 +44,55 @@ fun DrawingLettersComponent(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
+    // Settings dialog
+    if (uiState.showSettingsDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.toggleSettingsDialog() },
+            title = {
+                Text(
+                    "Select Character Set",
+                    style = MaterialTheme.typography.h6,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    LetterType.values().forEach { type ->
+                        Button(
+                            onClick = { viewModel.changeLetterType(type) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = if (type == uiState.letterType) 
+                                    MaterialTheme.colors.primary else MaterialTheme.colors.surface
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = type.displayName,
+                                color = if (type == uiState.letterType) 
+                                    Color.White else MaterialTheme.colors.onSurface,
+                                fontWeight = if (type == uiState.letterType) 
+                                    FontWeight.Bold else FontWeight.Normal,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.toggleSettingsDialog() },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primary)
+                ) {
+                    Text("Close")
+                }
+            }
+        )
+    }
+
     Scaffold(
         modifier = modifier,
         topBar = {
@@ -65,6 +114,14 @@ fun DrawingLettersComponent(
                             fontSize = 24.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.toggleSettingsDialog() }) {
+                        Text(
+                            "⚙️",
+                            fontSize = 24.sp
                         )
                     }
                 }
@@ -753,6 +810,154 @@ private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawLetterDots(
 
             // Right vertical
             drawDotsAlongLine(rightX, midY, rightX, bottomY, dotRadius)
+        }
+        // Greek Letters
+        'Α' -> { // Alpha - Same as A
+            drawDotsAlongLine(centerX, topY, leftX, bottomY, dotRadius)
+            drawDotsAlongLine(centerX, topY, rightX, bottomY, dotRadius)
+            drawDotsAlongLine(leftX + (centerX - leftX) * 0.3f, midY, rightX - (rightX - centerX) * 0.3f, midY, dotRadius)
+        }
+        'Β' -> { // Beta - Same as B
+            drawDotsAlongLine(leftX, topY, leftX, bottomY, dotRadius)
+            drawDotsAlongLine(leftX, topY, rightX - size / 10, topY, dotRadius)
+            drawDotsAlongLine(rightX, topY + size / 10, rightX, midY - size / 10, dotRadius)
+            drawDotsAlongLine(rightX - size / 10, midY, leftX, midY, dotRadius)
+            drawDotsAlongLine(leftX, midY, rightX - size / 10, midY, dotRadius)
+            drawDotsAlongLine(rightX, midY + size / 10, rightX, bottomY - size / 10, dotRadius)
+            drawDotsAlongLine(rightX - size / 10, bottomY, leftX, bottomY, dotRadius)
+        }
+        'Γ' -> { // Gamma
+            drawDotsAlongLine(leftX, topY, rightX, topY, dotRadius)
+            drawDotsAlongLine(leftX, topY, leftX, bottomY, dotRadius)
+        }
+        'Δ' -> { // Delta - Triangle
+            drawDotsAlongLine(centerX, topY, leftX, bottomY, dotRadius)
+            drawDotsAlongLine(centerX, topY, rightX, bottomY, dotRadius)
+            drawDotsAlongLine(leftX, bottomY, rightX, bottomY, dotRadius)
+        }
+        'Ε' -> { // Epsilon - Same as E
+            drawDotsAlongLine(leftX, topY, leftX, bottomY, dotRadius)
+            drawDotsAlongLine(leftX, topY, rightX, topY, dotRadius)
+            drawDotsAlongLine(leftX, midY, rightX - size / 6, midY, dotRadius)
+            drawDotsAlongLine(leftX, bottomY, rightX, bottomY, dotRadius)
+        }
+        'Ζ' -> { // Zeta - Same as Z
+            drawDotsAlongLine(leftX, topY, rightX, topY, dotRadius)
+            drawDotsAlongLine(rightX, topY, leftX, bottomY, dotRadius)
+            drawDotsAlongLine(leftX, bottomY, rightX, bottomY, dotRadius)
+        }
+        'Η' -> { // Eta - Same as H
+            drawDotsAlongLine(leftX, topY, leftX, bottomY, dotRadius)
+            drawDotsAlongLine(rightX, topY, rightX, bottomY, dotRadius)
+            drawDotsAlongLine(leftX, midY, rightX, midY, dotRadius)
+        }
+        'Θ' -> { // Theta
+            // O part
+            drawDotsAlongLine(leftX + size / 6, topY, rightX - size / 6, topY, dotRadius)
+            drawDotsAlongLine(leftX + size / 6, bottomY, rightX - size / 6, bottomY, dotRadius)
+            drawDotsAlongLine(leftX, topY + size / 6, leftX, bottomY - size / 6, dotRadius)
+            drawDotsAlongLine(rightX, topY + size / 6, rightX, bottomY - size / 6, dotRadius)
+            drawDotsAlongLine(leftX, topY + size / 6, leftX + size / 6, topY, dotRadius)
+            drawDotsAlongLine(rightX - size / 6, topY, rightX, topY + size / 6, dotRadius)
+            drawDotsAlongLine(leftX, bottomY - size / 6, leftX + size / 6, bottomY, dotRadius)
+            drawDotsAlongLine(rightX - size / 6, bottomY, rightX, bottomY - size / 6, dotRadius)
+            // Middle line
+            drawDotsAlongLine(leftX + size / 6, midY, rightX - size / 6, midY, dotRadius)
+        }
+        'Ι' -> { // Iota - Simple vertical line
+            drawDotsAlongLine(centerX, topY, centerX, bottomY, dotRadius)
+        }
+        'Κ' -> { // Kappa - Same as K
+            drawDotsAlongLine(leftX, topY, leftX, bottomY, dotRadius)
+            drawDotsAlongLine(leftX, midY, rightX, topY, dotRadius)
+            drawDotsAlongLine(leftX, midY, rightX, bottomY, dotRadius)
+        }
+        'Λ' -> { // Lambda
+            drawDotsAlongLine(centerX, topY, leftX, bottomY, dotRadius)
+            drawDotsAlongLine(centerX, topY, rightX, bottomY, dotRadius)
+        }
+        'Μ' -> { // Mu - Same as M
+            drawDotsAlongLine(leftX, topY, leftX, bottomY, dotRadius)
+            drawDotsAlongLine(rightX, topY, rightX, bottomY, dotRadius)
+            drawDotsAlongLine(leftX, topY, centerX, midY + size / 6, dotRadius)
+            drawDotsAlongLine(rightX, topY, centerX, midY + size / 6, dotRadius)
+        }
+        'Ν' -> { // Nu - Same as N
+            drawDotsAlongLine(leftX, topY, leftX, bottomY, dotRadius)
+            drawDotsAlongLine(rightX, topY, rightX, bottomY, dotRadius)
+            drawDotsAlongLine(leftX, topY, rightX, bottomY, dotRadius)
+        }
+        'Ξ' -> { // Xi
+            drawDotsAlongLine(leftX, topY, rightX, topY, dotRadius)
+            drawDotsAlongLine(leftX + size / 6, midY, rightX - size / 6, midY, dotRadius)
+            drawDotsAlongLine(leftX, bottomY, rightX, bottomY, dotRadius)
+        }
+        'Ο' -> { // Omicron - Same as O
+            drawDotsAlongLine(leftX + size / 6, topY, rightX - size / 6, topY, dotRadius)
+            drawDotsAlongLine(leftX + size / 6, bottomY, rightX - size / 6, bottomY, dotRadius)
+            drawDotsAlongLine(leftX, topY + size / 6, leftX, bottomY - size / 6, dotRadius)
+            drawDotsAlongLine(rightX, topY + size / 6, rightX, bottomY - size / 6, dotRadius)
+            drawDotsAlongLine(leftX, topY + size / 6, leftX + size / 6, topY, dotRadius)
+            drawDotsAlongLine(rightX - size / 6, topY, rightX, topY + size / 6, dotRadius)
+            drawDotsAlongLine(leftX, bottomY - size / 6, leftX + size / 6, bottomY, dotRadius)
+            drawDotsAlongLine(rightX - size / 6, bottomY, rightX, bottomY - size / 6, dotRadius)
+        }
+        'Π' -> { // Pi
+            drawDotsAlongLine(leftX, topY, rightX, topY, dotRadius)
+            drawDotsAlongLine(leftX + size / 6, topY, leftX + size / 6, bottomY, dotRadius)
+            drawDotsAlongLine(rightX - size / 6, topY, rightX - size / 6, bottomY, dotRadius)
+        }
+        'Ρ' -> { // Rho - Same as P
+            drawDotsAlongLine(leftX, topY, leftX, bottomY, dotRadius)
+            drawDotsAlongLine(leftX, topY, rightX - size / 10, topY, dotRadius)
+            drawDotsAlongLine(rightX, topY + size / 10, rightX, midY - size / 10, dotRadius)
+            drawDotsAlongLine(rightX - size / 10, midY, leftX, midY, dotRadius)
+        }
+        'Σ' -> { // Sigma
+            drawDotsAlongLine(rightX, topY, leftX, topY, dotRadius)
+            drawDotsAlongLine(leftX, topY, rightX - size / 6, midY, dotRadius)
+            drawDotsAlongLine(rightX - size / 6, midY, leftX, bottomY, dotRadius)
+            drawDotsAlongLine(leftX, bottomY, rightX, bottomY, dotRadius)
+        }
+        'Τ' -> { // Tau - Same as T
+            drawDotsAlongLine(leftX, topY, rightX, topY, dotRadius)
+            drawDotsAlongLine(centerX, topY, centerX, bottomY, dotRadius)
+        }
+        'Υ' -> { // Upsilon - Same as Y
+            drawDotsAlongLine(leftX, topY, centerX, midY, dotRadius)
+            drawDotsAlongLine(rightX, topY, centerX, midY, dotRadius)
+            drawDotsAlongLine(centerX, midY, centerX, bottomY, dotRadius)
+        }
+        'Φ' -> { // Phi
+            // Circle
+            drawDotsAlongLine(leftX + size / 6, topY, rightX - size / 6, topY, dotRadius)
+            drawDotsAlongLine(leftX + size / 6, bottomY, rightX - size / 6, bottomY, dotRadius)
+            drawDotsAlongLine(leftX, topY + size / 6, leftX, bottomY - size / 6, dotRadius)
+            drawDotsAlongLine(rightX, topY + size / 6, rightX, bottomY - size / 6, dotRadius)
+            drawDotsAlongLine(leftX, topY + size / 6, leftX + size / 6, topY, dotRadius)
+            drawDotsAlongLine(rightX - size / 6, topY, rightX, topY + size / 6, dotRadius)
+            drawDotsAlongLine(leftX, bottomY - size / 6, leftX + size / 6, bottomY, dotRadius)
+            drawDotsAlongLine(rightX - size / 6, bottomY, rightX, bottomY - size / 6, dotRadius)
+            // Vertical line
+            drawDotsAlongLine(centerX, topY - size / 6, centerX, bottomY + size / 6, dotRadius)
+        }
+        'Χ' -> { // Chi - Same as X
+            drawDotsAlongLine(leftX, topY, rightX, bottomY, dotRadius)
+            drawDotsAlongLine(rightX, topY, leftX, bottomY, dotRadius)
+        }
+        'Ψ' -> { // Psi
+            drawDotsAlongLine(leftX, topY, centerX, midY + size / 6, dotRadius)
+            drawDotsAlongLine(rightX, topY, centerX, midY + size / 6, dotRadius)
+            drawDotsAlongLine(centerX, topY, centerX, bottomY, dotRadius)
+        }
+        'Ω' -> { // Omega
+            drawDotsAlongLine(leftX, bottomY, leftX + size / 6, bottomY, dotRadius)
+            drawDotsAlongLine(rightX - size / 6, bottomY, rightX, bottomY, dotRadius)
+            // Curve
+            drawDotsAlongLine(leftX + size / 6, bottomY, leftX + size / 6, midY, dotRadius)
+            drawDotsAlongLine(rightX - size / 6, bottomY, rightX - size / 6, midY, dotRadius)
+            drawDotsAlongLine(leftX + size / 6, midY, centerX, topY, dotRadius)
+            drawDotsAlongLine(centerX, topY, rightX - size / 6, midY, dotRadius)
         }
         else -> {
             // For any other characters, draw a simple shape
