@@ -45,17 +45,17 @@ private val LightColorPalette = lightColors(
 )
 
 // Dark theme colors (optional, can be used for future dark mode support)
-private val DarkColorPalette = darkColors(
-    primary = Purple,
-    primaryVariant = Purple,
-    secondary = Pink,
-    background = Color(0xFF121212),
-    surface = Color(0xFF1E1E1E),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onBackground = Color.White,
-    onSurface = Color.White
-)
+// private val DarkColorPalette = darkColors(
+//     primary = Purple,
+//     primaryVariant = Purple,
+//     secondary = Pink,
+//     background = Color(0xFF121212),
+//     surface = Color(0xFF1E1E1E),
+//     onPrimary = Color.White,
+//     onSecondary = Color.White,
+//     onBackground = Color.White,
+//     onSurface = Color.White
+// )
 
 // Shape definitions with rounded corners for a friendly look
 val KidsarioShapes = Shapes(
@@ -162,11 +162,14 @@ fun KidsarioTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
+    val colors = LightColorPalette
+    /*
     val colors = if (darkTheme) {
         DarkColorPalette
     } else {
         LightColorPalette
     }
+    */
 
     MaterialTheme(
         colors = colors,
