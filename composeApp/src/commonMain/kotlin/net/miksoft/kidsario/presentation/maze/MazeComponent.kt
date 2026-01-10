@@ -167,22 +167,28 @@ fun MazeComponent(
                 }
 
                 // Maze canvas
-                MazeCanvas(
-                    maze = uiState.maze,
-                    userDrawingPoints = uiState.userDrawingPoints,
-                    startPoint = uiState.startPoint,
-                    endPoint = uiState.endPoint,
-                    onDrawingPointAdded = { x, y, isNewStroke ->
-                        viewModel.addDrawingPoint(x, y, isNewStroke)
-                    },
-                    isEnabled = uiState.isGameActive,
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(1f)
-                        .shadow(8.dp, RoundedCornerShape(16.dp))
-                        .clip(RoundedCornerShape(16.dp))
-                        .background(Color.White)
-                )
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    MazeCanvas(
+                        maze = uiState.maze,
+                        userDrawingPoints = uiState.userDrawingPoints,
+                        startPoint = uiState.startPoint,
+                        endPoint = uiState.endPoint,
+                        onDrawingPointAdded = { x, y, isNewStroke ->
+                            viewModel.addDrawingPoint(x, y, isNewStroke)
+                        },
+                        isEnabled = uiState.isGameActive,
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .shadow(8.dp, RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Color.White)
+                    )
+                }
 
                 // Success message
                 AnimatedVisibility(

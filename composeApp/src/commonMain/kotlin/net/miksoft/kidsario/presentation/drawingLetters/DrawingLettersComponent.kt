@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -126,7 +127,8 @@ fun DrawingLettersComponent(
                 shape = RoundedCornerShape(24.dp)
             ) {
                 Box(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp),
+                    contentAlignment = Alignment.Center
                 ) {
                     // Draw the dotted letter/number and capture user's drawing
                     DrawingCanvas(
@@ -136,7 +138,7 @@ fun DrawingLettersComponent(
                             viewModel.addDrawingPoint(x, y, isNewStroke)
                         },
                         isEnabled = uiState.isGameActive,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.aspectRatio(1f)
                     )
 
                     // Feedback message with playful design
@@ -260,6 +262,7 @@ private fun DrawingCanvas(
 ) {
     // Track whether the user is currently drawing
     var isDrawing by remember { mutableStateOf(false) }
+    var canvasSize by remember { mutableStateOf(Size.Zero) }
 
     Canvas(
         modifier = modifier
@@ -269,7 +272,9 @@ private fun DrawingCanvas(
                 detectDragGestures(
                     onDragStart = { offset ->
                         isDrawing = true
-                        onDrawingPointAdded(offset.x, offset.y, true)
+                        if (canvasSize.width > 0 && canvasSize.height > 0) {
+                            onDrawingPointAdded(offset.x / canvasSize.width, offset.y / canvasSize.height, true)
+                        }
                     },
                     onDragEnd = {
                         isDrawing = false
@@ -279,11 +284,18 @@ private fun DrawingCanvas(
                     },
                     onDrag = { change, _ ->
                         change.consume()
-                        onDrawingPointAdded(change.position.x, change.position.y, false)
+                        if (canvasSize.width > 0 && canvasSize.height > 0) {
+                            onDrawingPointAdded(
+                                change.position.x / canvasSize.width,
+                                change.position.y / canvasSize.height,
+                                false
+                            )
+                        }
                     }
                 )
             }
     ) {
+        canvasSize = size
         val canvasWidth = size.width
         val canvasHeight = size.height
 
@@ -293,8 +305,9 @@ private fun DrawingCanvas(
         // Draw the user's drawing with playful color
         if (userDrawingPoints.isNotEmpty()) {
             var currentPath = Path()
+            // Denormalize the first point
             var currentPoint = userDrawingPoints.first()
-            currentPath.moveTo(currentPoint.x, currentPoint.y)
+            currentPath.moveTo(currentPoint.x * canvasWidth, currentPoint.y * canvasHeight)
 
             for (i in 1 until userDrawingPoints.size) {
                 val point = userDrawingPoints[i]
@@ -313,10 +326,12 @@ private fun DrawingCanvas(
 
                     // Start a new path
                     currentPath = Path()
-                    currentPath.moveTo(point.x, point.y)
+                    // Denormalize
+                    currentPath.moveTo(point.x * canvasWidth, point.y * canvasHeight)
                 } else {
                     // Continue the current path
-                    currentPath.lineTo(point.x, point.y)
+                    // Denormalize
+                    currentPath.lineTo(point.x * canvasWidth, point.y * canvasHeight)
                 }
             }
 
