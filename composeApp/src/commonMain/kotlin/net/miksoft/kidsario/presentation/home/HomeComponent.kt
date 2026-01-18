@@ -39,6 +39,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -151,6 +152,34 @@ fun HomeComponent(
                         end = Offset(size.width * 0.5f, size.height * 0.8f),
                         strokeWidth = strokeWidth
                     )
+                }
+            }
+        ),
+        MiniGame(
+            id = "free_drawing",
+            name = "Free Drawing",
+            color = GameColors.StarColor,
+            iconDrawer = { mod ->
+                Canvas(modifier = mod) {
+                     val width = size.width
+                     val height = size.height
+                     // Draw simple pencil
+                     rotate(45f, pivot = center) {
+                         // Pencil body
+                         drawRect(
+                             color = Color.White,
+                             topLeft = Offset(width * 0.4f, height * 0.3f),
+                             size = Size(width * 0.2f, height * 0.4f)
+                         )
+                         // Tip
+                         val path = Path().apply {
+                             moveTo(width * 0.4f, height * 0.3f)
+                             lineTo(width * 0.6f, height * 0.3f)
+                             lineTo(width * 0.5f, height * 0.15f)
+                             close()
+                         }
+                         drawPath(path, Color.White)
+                     }
                 }
             }
         )

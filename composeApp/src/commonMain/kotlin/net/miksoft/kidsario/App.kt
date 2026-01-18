@@ -15,6 +15,8 @@ import net.miksoft.kidsario.presentation.drawingLetters.DrawingLettersComponent
 import net.miksoft.kidsario.presentation.drawingLetters.DrawingLettersViewModel
 import net.miksoft.kidsario.presentation.maze.MazeComponent
 import net.miksoft.kidsario.presentation.maze.MazeViewModel
+import net.miksoft.kidsario.presentation.freeDrawing.FreeDrawingComponent
+import net.miksoft.kidsario.presentation.freeDrawing.FreeDrawingViewModel
 import net.miksoft.kidsario.theme.KidsarioTheme
 
 // Enum to represent different screens in the app
@@ -22,7 +24,8 @@ enum class Screen {
     HOME,
     COUNTING_OBJECTS,
     DRAWING_LETTERS,
-    MAZE
+    MAZE,
+    FREE_DRAWING
 }
 
 @Composable
@@ -37,6 +40,7 @@ fun App() {
         val countingObjectsViewModel = remember { CountingObjectsViewModel() }
         val drawingLettersViewModel = remember { DrawingLettersViewModel() }
         val mazeViewModel = remember { MazeViewModel() }
+        val freeDrawingViewModel = remember { FreeDrawingViewModel() }
 
         // Handle navigation from home to mini games
         val onMiniGameClicked = { gameId: String ->
@@ -44,6 +48,7 @@ fun App() {
                 "counting_objects" -> currentScreen = Screen.COUNTING_OBJECTS
                 "drawing_letters" -> currentScreen = Screen.DRAWING_LETTERS
                 "maze" -> currentScreen = Screen.MAZE
+                "free_drawing" -> currentScreen = Screen.FREE_DRAWING
                 else -> homeViewModel.onMiniGameClicked(gameId)
             }
         }
@@ -86,6 +91,13 @@ fun App() {
                 MazeComponent(
                     modifier = modifier,
                     viewModel = mazeViewModel,
+                    onNavigateBack = onNavigateBack
+                )
+            }
+            Screen.FREE_DRAWING -> {
+                FreeDrawingComponent(
+                    modifier = modifier,
+                    viewModel = freeDrawingViewModel,
                     onNavigateBack = onNavigateBack
                 )
             }
