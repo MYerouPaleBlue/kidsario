@@ -17,6 +17,8 @@ import net.miksoft.kidsario.presentation.maze.MazeComponent
 import net.miksoft.kidsario.presentation.maze.MazeViewModel
 import net.miksoft.kidsario.presentation.freeDrawing.FreeDrawingComponent
 import net.miksoft.kidsario.presentation.freeDrawing.FreeDrawingViewModel
+import net.miksoft.kidsario.presentation.jigsawPuzzle.JigsawPuzzleComponent
+import net.miksoft.kidsario.presentation.jigsawPuzzle.JigsawPuzzleViewModel
 import net.miksoft.kidsario.theme.KidsarioTheme
 
 // Enum to represent different screens in the app
@@ -25,7 +27,8 @@ enum class Screen {
     COUNTING_OBJECTS,
     DRAWING_LETTERS,
     MAZE,
-    FREE_DRAWING
+    FREE_DRAWING,
+    JIGSAW_PUZZLE
 }
 
 @Composable
@@ -41,6 +44,7 @@ fun App() {
         val drawingLettersViewModel = remember { DrawingLettersViewModel() }
         val mazeViewModel = remember { MazeViewModel() }
         val freeDrawingViewModel = remember { FreeDrawingViewModel() }
+        val jigsawPuzzleViewModel = remember { JigsawPuzzleViewModel() }
 
         // Handle navigation from home to mini games
         val onMiniGameClicked = { gameId: String ->
@@ -49,6 +53,7 @@ fun App() {
                 "drawing_letters" -> currentScreen = Screen.DRAWING_LETTERS
                 "maze" -> currentScreen = Screen.MAZE
                 "free_drawing" -> currentScreen = Screen.FREE_DRAWING
+                "jigsaw_puzzle" -> currentScreen = Screen.JIGSAW_PUZZLE
                 else -> homeViewModel.onMiniGameClicked(gameId)
             }
         }
@@ -98,6 +103,13 @@ fun App() {
                 FreeDrawingComponent(
                     modifier = modifier,
                     viewModel = freeDrawingViewModel,
+                    onNavigateBack = onNavigateBack
+                )
+            }
+            Screen.JIGSAW_PUZZLE -> {
+                JigsawPuzzleComponent(
+                    modifier = modifier,
+                    viewModel = jigsawPuzzleViewModel,
                     onNavigateBack = onNavigateBack
                 )
             }

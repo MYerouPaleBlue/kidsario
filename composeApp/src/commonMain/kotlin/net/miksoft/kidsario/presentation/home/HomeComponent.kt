@@ -182,6 +182,54 @@ fun HomeComponent(
                      }
                 }
             }
+        ),
+        MiniGame(
+            id = "jigsaw_puzzle",
+            name = "Jigsaw Puzzle",
+            color = GameColors.HeartColor,
+            iconDrawer = { mod ->
+                Canvas(modifier = mod) {
+                    val width = size.width
+                    val height = size.height
+                    val strokeWidth = size.minDimension / 20
+                    
+                    // Draw puzzle pieces grid
+                    val pieceWidth = width * 0.35f
+                    val pieceHeight = height * 0.35f
+                    
+                    // Top-left piece
+                    drawRect(
+                        color = Color.White,
+                        topLeft = Offset(width * 0.15f, height * 0.15f),
+                        size = Size(pieceWidth, pieceHeight),
+                        style = Stroke(width = strokeWidth)
+                    )
+                    
+                    // Top-right piece
+                    drawRect(
+                        color = Color.White,
+                        topLeft = Offset(width * 0.5f, height * 0.15f),
+                        size = Size(pieceWidth, pieceHeight),
+                        style = Stroke(width = strokeWidth)
+                    )
+                    
+                    // Bottom-left piece
+                    drawRect(
+                        color = Color.White,
+                        topLeft = Offset(width * 0.15f, height * 0.5f),
+                        size = Size(pieceWidth, pieceHeight),
+                        style = Stroke(width = strokeWidth)
+                    )
+                    
+                    // Bottom-right piece (slightly offset to show puzzle effect)
+                    drawRect(
+                        color = Color.White,
+                        topLeft = Offset(width * 0.55f, height * 0.55f),
+                        size = Size(pieceWidth, pieceHeight),
+                        style = Stroke(width = strokeWidth)
+                    )
+                }
+            }
         )
     )
 
