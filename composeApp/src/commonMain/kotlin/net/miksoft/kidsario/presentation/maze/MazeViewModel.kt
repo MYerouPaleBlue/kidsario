@@ -11,8 +11,9 @@ import kotlin.random.Random
 
 /**
  * Enum representing difficulty levels for the maze game
+ * Base grid size is for the smaller dimension; larger dimension scales with aspect ratio
  */
-enum class MazeDifficulty(val displayName: String, val gridSize: Int) {
+enum class MazeDifficulty(val displayName: String, val baseGridSize: Int) {
     EASY("Easy", 11),
     MEDIUM("Medium", 15),
     HARD("Hard", 19),
@@ -28,12 +29,49 @@ class MazeViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(MazeUiState())
     val uiState: StateFlow<MazeUiState> = _uiState.asStateFlow()
 
-    // Maze dimensions based on difficulty
+    // Current level (increases difficulty progressively)
+    private var currentLevel = 1
+
+    // Screen aspect ratio for rectangular maze generation
+    private var screenAspectRatio = 1f
+
+    // Maze dimensions based on difficulty and level
     private val mazeWidth: Int
-        get() = _uiState.value.difficulty.gridSize
+        get() {
+            val baseSize = getEffectiveGridSize()
+            return if (screenAspectRatio >= 1f) {
+                // Landscape or square: width is larger
+                makeOdd((baseSize * screenAspectRatio).toInt().coerceAtLeast(baseSize))
+            } else {
+                baseSize
+            }
+        }
 
     private val mazeHeight: Int
-        get() = _uiState.value.difficulty.gridSize
+        get() {
+            val baseSize = getEffectiveGridSize()
+            return if (screenAspectRatio < 1f) {
+                // Portrait: height is larger
+                makeOdd((baseSize / screenAspectRatio).toInt().coerceAtLeast(baseSize))
+            } else {
+                baseSize
+            }
+        }
+
+    /**
+     * Get the effective grid size based on current difficulty and level.
+     * Each level increases the grid size by 2 (to maintain odd numbers).
+     */
+    private fun getEffectiveGridSize(): Int {
+        val baseSize = _uiState.value.difficulty.baseGridSize
+        val levelBonus = (currentLevel - 1) * 2  // Add 2 cells per level
+        return makeOdd(baseSize + levelBonus)
+    }
+
+    /**
+     * Ensure the number is odd (required for maze generation algorithm).
+     */
+    private fun makeOdd(n: Int): Int = if (n % 2 == 0) n + 1 else n
 
     // Flag to control difficulty dialog visibility
     private val _showDifficultyDialog = MutableStateFlow(false)
@@ -44,11 +82,26 @@ class MazeViewModel : ViewModel() {
     }
 
     /**
-     * Generate a new maze.
+     * Update the screen aspect ratio for rectangular maze generation.
      */
-    fun generateNewMaze() {
+    fun updateScreenAspectRatio(width: Float, height: Float) {
+        if (width > 0 && height > 0) {
+            screenAspectRatio = width / height
+        }
+    }
+
+    /**
+     * Generate a new maze.
+     * @param advanceLevel Whether to advance to the next level (after completing a maze)
+     */
+    fun generateNewMaze(advanceLevel: Boolean = false) {
         viewModelScope.launch {
             val currentState = _uiState.value
+            
+            if (advanceLevel) {
+                currentLevel++
+            }
+            
             val maze = generateMaze(mazeWidth, mazeHeight)
 
             _uiState.value = MazeUiState(
@@ -60,7 +113,10 @@ class MazeViewModel : ViewModel() {
                 startPoint = findStartPoint(maze),
                 endPoint = findEndPoint(maze),
                 difficulty = currentState.difficulty,
-                showDifficultyDialog = false
+                showDifficultyDialog = false,
+                level = currentLevel,
+                mazeWidth = mazeWidth,
+                mazeHeight = mazeHeight
             )
         }
     }
@@ -103,10 +159,10 @@ class MazeViewModel : ViewModel() {
                 isGameActive = false
             )
 
-            // Generate a new maze after a delay
+            // Generate a new maze after a delay (advance to next level)
             viewModelScope.launch {
                 delay(1500) // Wait 1.5 seconds before generating a new maze
-                generateNewMaze()
+                generateNewMaze(advanceLevel = true)
             }
         } else {
             _uiState.value = currentState.copy(
@@ -137,10 +193,12 @@ class MazeViewModel : ViewModel() {
 
     /**
      * Change the difficulty level and generate a new maze.
+     * Resets level to 1 when difficulty changes.
      * 
      * @param difficulty The new difficulty level
      */
     fun changeDifficulty(difficulty: MazeDifficulty) {
+        currentLevel = 1  // Reset level when difficulty changes
         _uiState.value = _uiState.value.copy(
             difficulty = difficulty,
             showDifficultyDialog = false
@@ -289,7 +347,10 @@ data class MazeUiState(
     val startPoint: Pair<Int, Int> = Pair(1, 1),
     val endPoint: Pair<Int, Int> = Pair(8, 8),
     val difficulty: MazeDifficulty = MazeDifficulty.EASY,
-    val showDifficultyDialog: Boolean = false
+    val showDifficultyDialog: Boolean = false,
+    val level: Int = 1,
+    val mazeWidth: Int = 11,
+    val mazeHeight: Int = 11
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -306,6 +367,9 @@ data class MazeUiState(
         if (endPoint != other.endPoint) return false
         if (difficulty != other.difficulty) return false
         if (showDifficultyDialog != other.showDifficultyDialog) return false
+        if (level != other.level) return false
+        if (mazeWidth != other.mazeWidth) return false
+        if (mazeHeight != other.mazeHeight) return false
 
         return true
     }
@@ -320,6 +384,9 @@ data class MazeUiState(
         result = 31 * result + endPoint.hashCode()
         result = 31 * result + difficulty.hashCode()
         result = 31 * result + showDifficultyDialog.hashCode()
+        result = 31 * result + level
+        result = 31 * result + mazeWidth
+        result = 31 * result + mazeHeight
         return result
     }
 }

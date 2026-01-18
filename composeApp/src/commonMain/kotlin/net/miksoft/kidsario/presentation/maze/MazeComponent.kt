@@ -100,7 +100,7 @@ fun MazeComponent(
                 elevation = 8.dp,
                 title = { 
                     Text(
-                        "Maze Game",
+                        "Maze Game - Level ${uiState.level}",
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White
@@ -166,7 +166,7 @@ fun MazeComponent(
                     )
                 }
 
-                // Maze canvas
+                // Maze canvas - fills available space for rectangular mazes
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -178,12 +178,17 @@ fun MazeComponent(
                         userDrawingPoints = uiState.userDrawingPoints,
                         startPoint = uiState.startPoint,
                         endPoint = uiState.endPoint,
+                        mazeWidth = uiState.mazeWidth,
+                        mazeHeight = uiState.mazeHeight,
                         onDrawingPointAdded = { x, y, isNewStroke ->
                             viewModel.addDrawingPoint(x, y, isNewStroke)
                         },
+                        onSizeChanged = { width, height ->
+                            viewModel.updateScreenAspectRatio(width, height)
+                        },
                         isEnabled = uiState.isGameActive,
                         modifier = Modifier
-                            .aspectRatio(1f)
+                            .fillMaxSize()
                             .shadow(8.dp, RoundedCornerShape(16.dp))
                             .clip(RoundedCornerShape(16.dp))
                             .background(Color.White)
@@ -228,11 +233,21 @@ fun MazeCanvas(
     userDrawingPoints: List<DrawingPoint>,
     startPoint: Pair<Int, Int>,
     endPoint: Pair<Int, Int>,
+    mazeWidth: Int,
+    mazeHeight: Int,
     onDrawingPointAdded: (Float, Float, Boolean) -> Unit,
+    onSizeChanged: (Float, Float) -> Unit,
     isEnabled: Boolean,
     modifier: Modifier = Modifier
 ) {
     var canvasSize by remember { mutableStateOf(Size.Zero) }
+
+    // Report size changes to ViewModel for aspect ratio calculation
+    LaunchedEffect(canvasSize) {
+        if (canvasSize.width > 0 && canvasSize.height > 0) {
+            onSizeChanged(canvasSize.width, canvasSize.height)
+        }
+    }
 
     Canvas(
         modifier = modifier
