@@ -393,9 +393,28 @@ fun PuzzlePieceView(
     var dragOffsetY by remember { mutableStateOf(0f) }
     var isDragging by remember { mutableStateOf(false) }
     
-    // Base position from piece state
-    val basePieceX = piece.currentX * boardWidth - pieceDisplaySize / 2
-    val basePieceY = piece.currentY * boardHeight - pieceDisplaySize / 2
+    // Calculate puzzle area dimensions (must match PuzzleBoard calculations)
+    val maxPuzzleWidth = boardWidth * 0.8f
+    val maxPuzzleHeight = boardHeight * 0.5f
+    val puzzleSize = minOf(maxPuzzleWidth, maxPuzzleHeight)
+    val puzzleAreaStartX = (boardWidth - puzzleSize) / 2f
+    val puzzleAreaStartY = boardHeight * 0.05f
+    val cellSize = puzzleSize / gridSize
+    
+    // Calculate base position - for placed pieces, use exact grid position
+    val basePieceX: Float
+    val basePieceY: Float
+    if (piece.isPlaced) {
+        // Calculate exact position centered in the correct grid cell
+        val cellCenterX = puzzleAreaStartX + (piece.correctCol + 0.5f) * cellSize
+        val cellCenterY = puzzleAreaStartY + (piece.correctRow + 0.5f) * cellSize
+        basePieceX = cellCenterX - pieceDisplaySize / 2
+        basePieceY = cellCenterY - pieceDisplaySize / 2
+    } else {
+        // For non-placed pieces, use the currentX/Y from ViewModel
+        basePieceX = piece.currentX * boardWidth - pieceDisplaySize / 2
+        basePieceY = piece.currentY * boardHeight - pieceDisplaySize / 2
+    }
     
     // Final position combines base position with local drag offset
     val pieceX = basePieceX + dragOffsetX
@@ -471,7 +490,7 @@ fun PuzzlePieceView(
                     translationX = imageOffsetX
                     translationY = imageOffsetY
                 },
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.FillBounds
         )
     }
 }
