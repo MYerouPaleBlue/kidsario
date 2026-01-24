@@ -235,60 +235,47 @@ fun SidePanel(
             Divider()
 
             // Content based on tool
-            if (uiState.currentTool == DrawingTool.STAMP) {
-                // Colors (Horizontal Grid for space efficiency)
-                Text("Colors", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier.height(120.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                     items(listOf(Purple, Pink, Yellow, Green, Blue, Orange, Red, Teal, Color.Black, Color.Gray)) { color ->
-                        ColorButton(
-                            color = color,
-                            isSelected = uiState.currentColor == color,
-                            onClick = { onColorSelected(color) }
-                        )
+            when (uiState.currentTool) {
+                DrawingTool.STAMP -> {
+                    // Stamps (Scrollable grid in place of colors)
+                    Text("Stamps", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(StampType.values()) { stamp ->
+                            StampButton(
+                                type = stamp,
+                                isSelected = uiState.selectedStamp == stamp,
+                                color = uiState.currentColor,
+                                onClick = { onStampSelected(stamp) }
+                            )
+                        }
                     }
                 }
-                
-                Divider()
-                
-                // Stamps (Vertical List)
-                Text("Stamps", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    items(StampType.values()) { stamp ->
-                        StampButton(
-                            type = stamp,
-                            isSelected = uiState.selectedStamp == stamp,
-                            color = uiState.currentColor,
-                            onClick = { onStampSelected(stamp) }
-                        )
+                DrawingTool.PEN -> {
+                    // Colors (only visible when PEN tool is selected)
+                    Text("Colors", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(listOf(Purple, Pink, Yellow, Green, Blue, Orange, Red, Teal, Color.Black, Color.Gray)) { color ->
+                            ColorButton(
+                                color = color,
+                                isSelected = uiState.currentColor == color,
+                                onClick = { onColorSelected(color) }
+                            )
+                        }
                     }
                 }
-            } else {
-                 // Colors (Vertical List filling space)
-                Text("Colors", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    val colors = listOf(
-                        Purple, Pink, Yellow, Green, Blue, Orange, Red, Teal, Color.Black, Color.Gray
-                    )
-                    items(colors) { color ->
-                        ColorButton(
-                            color = color,
-                            isSelected = uiState.currentColor == color,
-                            onClick = { onColorSelected(color) }
-                        )
-                    }
+                DrawingTool.ERASER -> {
+                    // Eraser doesn't need color or stamp selection
+                    Spacer(modifier = Modifier.weight(1f))
                 }
             }
 
