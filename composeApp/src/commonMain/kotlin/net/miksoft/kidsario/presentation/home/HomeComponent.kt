@@ -230,6 +230,40 @@ fun HomeComponent(
                     )
                 }
             }
+        ),
+        MiniGame(
+            id = "jumping_game",
+            name = "Bunny Jump",
+            color = GameColors.SquareColor,
+            iconDrawer = { mod ->
+                Canvas(modifier = mod) {
+                    val width = size.width
+                    val height = size.height
+                    
+                    // Simple jumping ball with arc
+                    // Ball (player)
+                    drawCircle(
+                        color = Color.White,
+                        radius = size.minDimension / 6,
+                        center = Offset(width * 0.3f, height * 0.4f)
+                    )
+                    
+                    // Ground line
+                    drawLine(
+                        color = Color.White,
+                        start = Offset(0f, height * 0.8f),
+                        end = Offset(width, height * 0.8f),
+                        strokeWidth = size.minDimension / 15
+                    )
+                    
+                    // Simple obstacle (rectangle)
+                    drawRect(
+                        color = Color.White,
+                        topLeft = Offset(width * 0.7f, height * 0.55f),
+                        size = Size(width * 0.15f, height * 0.25f)
+                    )
+                }
+            }
         )
     )
 
