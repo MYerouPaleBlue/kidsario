@@ -405,10 +405,12 @@ fun PuzzlePieceView(
                     Modifier.pointerInput(piece.id) {
                         detectDragGestures(
                             onDragStart = { onStartDrag() },
-                            onDrag = { change, _ ->
-                                val newX = (pieceX + change.position.x + pieceDisplaySize / 2) / boardWidth
-                                val newY = (pieceY + change.position.y + pieceDisplaySize / 2) / boardHeight
-                                onDrag(newX, newY)
+                            onDrag = { change, dragAmount ->
+                                change.consume()
+                                // Pass normalized delta values to update position incrementally
+                                val deltaX = dragAmount.x / boardWidth
+                                val deltaY = dragAmount.y / boardHeight
+                                onDrag(deltaX, deltaY)
                             },
                             onDragEnd = { onEndDrag() },
                             onDragCancel = { onEndDrag() }

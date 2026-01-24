@@ -118,15 +118,20 @@ class JigsawPuzzleViewModel : ViewModel() {
     }
 
     /**
-     * Update the position of a dragged piece.
+     * Update the position of a dragged piece by adding delta values.
+     * @param pieceId The ID of the piece being dragged
+     * @param deltaX The normalized horizontal movement delta
+     * @param deltaY The normalized vertical movement delta
      */
-    fun updatePiecePosition(pieceId: Int, x: Float, y: Float) {
+    fun updatePiecePosition(pieceId: Int, deltaX: Float, deltaY: Float) {
         if (_uiState.value.isComplete) return
 
         val currentState = _uiState.value
         val updatedPieces = currentState.pieces.map { piece ->
             if (piece.id == pieceId && !piece.isPlaced) {
-                piece.copy(currentX = x.coerceIn(0.05f, 0.95f), currentY = y.coerceIn(0.05f, 0.95f))
+                val newX = (piece.currentX + deltaX).coerceIn(0.05f, 0.95f)
+                val newY = (piece.currentY + deltaY).coerceIn(0.05f, 0.95f)
+                piece.copy(currentX = newX, currentY = newY)
             } else {
                 piece
             }
