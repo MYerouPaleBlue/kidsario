@@ -370,6 +370,7 @@ fun PuzzleBoard(
 
 /**
  * Individual puzzle piece view with image clipping and drag handling.
+ * Uses local state for smooth dragging without recomposition on every drag event.
  */
 @Composable
 fun PuzzlePieceView(
@@ -387,8 +388,18 @@ fun PuzzlePieceView(
     val density = LocalDensity.current
     val painter = getPuzzleImagePainter(puzzleImage)
     
-    val pieceX = piece.currentX * boardWidth - pieceDisplaySize / 2
-    val pieceY = piece.currentY * boardHeight - pieceDisplaySize / 2
+    // Local state for tracking drag offset - this avoids recomposition during drag
+    var dragOffsetX by remember { mutableStateOf(0f) }
+    var dragOffsetY by remember { mutableStateOf(0f) }
+    var isDragging by remember { mutableStateOf(false) }
+    
+    // Base position from piece state
+    val basePieceX = piece.currentX * boardWidth - pieceDisplaySize / 2
+    val basePieceY = piece.currentY * boardHeight - pieceDisplaySize / 2
+    
+    // Final position combines base position with local drag offset
+    val pieceX = basePieceX + dragOffsetX
+    val pieceY = basePieceY + dragOffsetY
     
     // Calculate the full image size and offset for this piece
     val fullImageSize = pieceDisplaySize * gridSize
@@ -399,27 +410,47 @@ fun PuzzlePieceView(
         modifier = Modifier
             .offset { IntOffset(pieceX.roundToInt(), pieceY.roundToInt()) }
             .size(with(density) { pieceDisplaySize.toDp() })
-            .zIndex(if (isBeingDragged) 100f else if (piece.isPlaced) 1f else 10f)
+            .zIndex(if (isDragging || isBeingDragged) 100f else if (piece.isPlaced) 1f else 10f)
             .then(
                 if (!piece.isPlaced) {
                     Modifier.pointerInput(piece.id) {
                         detectDragGestures(
-                            onDragStart = { onStartDrag() },
+                            onDragStart = {
+                                isDragging = true
+                                dragOffsetX = 0f
+                                dragOffsetY = 0f
+                                onStartDrag()
+                            },
                             onDrag = { change, dragAmount ->
                                 change.consume()
-                                // Pass normalized delta values to update position incrementally
-                                val deltaX = dragAmount.x / boardWidth
-                                val deltaY = dragAmount.y / boardHeight
-                                onDrag(deltaX, deltaY)
+                                // Update local offset for immediate visual feedback
+                                dragOffsetX += dragAmount.x
+                                dragOffsetY += dragAmount.y
                             },
-                            onDragEnd = { onEndDrag() },
-                            onDragCancel = { onEndDrag() }
+                            onDragEnd = {
+                                // Commit the final position to ViewModel
+                                val deltaX = dragOffsetX / boardWidth
+                                val deltaY = dragOffsetY / boardHeight
+                                onDrag(deltaX, deltaY)
+                                // Reset local state
+                                dragOffsetX = 0f
+                                dragOffsetY = 0f
+                                isDragging = false
+                                onEndDrag()
+                            },
+                            onDragCancel = {
+                                // Reset without committing
+                                dragOffsetX = 0f
+                                dragOffsetY = 0f
+                                isDragging = false
+                                onEndDrag()
+                            }
                         )
                     }
                 } else Modifier
             )
             .shadow(
-                elevation = if (isBeingDragged) 16.dp else if (piece.isPlaced) 2.dp else 8.dp,
+                elevation = if (isDragging || isBeingDragged) 16.dp else if (piece.isPlaced) 2.dp else 8.dp,
                 shape = RoundedCornerShape(8.dp)
             )
             .clip(RoundedCornerShape(8.dp))
