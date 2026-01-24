@@ -4,7 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -19,10 +19,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -36,7 +38,8 @@ import kidsario.composeapp.generated.resources.Res
 import kidsario.composeapp.generated.resources.puzzle_hippo
 import kidsario.composeapp.generated.resources.puzzle_whale
 import net.miksoft.kidsario.theme.GameColors
-import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.imageResource
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 /**
@@ -224,12 +227,12 @@ fun JigsawPuzzleComponent(
 }
 
 /**
- * Get the painter for the puzzle image resource
+ * Get the ImageBitmap for the puzzle image resource
  */
 @Composable
-fun getPuzzleImagePainter(puzzleImage: PuzzleImageResource) = when (puzzleImage) {
-    PuzzleImageResource.WHALE -> painterResource(Res.drawable.puzzle_whale)
-    PuzzleImageResource.HIPPO -> painterResource(Res.drawable.puzzle_hippo)
+fun getPuzzleImageBitmap(puzzleImage: PuzzleImageResource): ImageBitmap = when (puzzleImage) {
+    PuzzleImageResource.WHALE -> imageResource(Res.drawable.puzzle_whale)
+    PuzzleImageResource.HIPPO -> imageResource(Res.drawable.puzzle_hippo)
 }
 
 /**
@@ -371,6 +374,7 @@ fun PuzzleBoard(
 /**
  * Individual puzzle piece view with image clipping and drag handling.
  * Uses local state for smooth dragging without recomposition on every drag event.
+ * Uses Canvas-based drawing to properly center-crop non-square images.
  */
 @Composable
 fun PuzzlePieceView(
@@ -386,7 +390,7 @@ fun PuzzlePieceView(
     onEndDrag: () -> Unit
 ) {
     val density = LocalDensity.current
-    val painter = getPuzzleImagePainter(puzzleImage)
+    val imageBitmap = getPuzzleImageBitmap(puzzleImage)
     
     // Local state for tracking drag offset - this avoids recomposition during drag
     var dragOffsetX by remember { mutableStateOf(0f) }
@@ -419,11 +423,6 @@ fun PuzzlePieceView(
     // Final position combines base position with local drag offset
     val pieceX = basePieceX + dragOffsetX
     val pieceY = basePieceY + dragOffsetY
-    
-    // Calculate the full image size and offset for this piece
-    val fullImageSize = pieceDisplaySize * gridSize
-    val imageOffsetX = -piece.correctCol * pieceDisplaySize
-    val imageOffsetY = -piece.correctRow * pieceDisplaySize
 
     Box(
         modifier = Modifier
@@ -480,17 +479,52 @@ fun PuzzlePieceView(
                 shape = RoundedCornerShape(8.dp)
             )
     ) {
-        // Image with graphicsLayer translation for proper clipping
-        Image(
-            painter = painter,
-            contentDescription = "Puzzle piece",
-            modifier = Modifier
-                .requiredSize(with(density) { fullImageSize.toDp() })
-                .graphicsLayer {
-                    translationX = imageOffsetX
-                    translationY = imageOffsetY
-                },
-            contentScale = ContentScale.FillBounds
-        )
+        // Use Canvas to draw the puzzle piece with proper center-cropping
+        // This ensures non-square images are cropped to square before slicing into pieces
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawPuzzlePiece(
+                imageBitmap = imageBitmap,
+                gridSize = gridSize,
+                pieceRow = piece.correctRow,
+                pieceCol = piece.correctCol,
+                canvasSize = size
+            )
+        }
     }
+}
+
+/**
+ * Draws a puzzle piece from the image bitmap with proper center-cropping.
+ * First center-crops the image to make it square, then extracts the piece portion.
+ */
+private fun DrawScope.drawPuzzlePiece(
+    imageBitmap: ImageBitmap,
+    gridSize: Int,
+    pieceRow: Int,
+    pieceCol: Int,
+    canvasSize: Size
+) {
+    val imageWidth = imageBitmap.width
+    val imageHeight = imageBitmap.height
+    
+    // Calculate the square crop region (center-crop)
+    val squareSize = min(imageWidth, imageHeight)
+    val cropOffsetX = (imageWidth - squareSize) / 2
+    val cropOffsetY = (imageHeight - squareSize) / 2
+    
+    // Calculate the piece size within the cropped square
+    val pieceSizeInImage = squareSize / gridSize
+    
+    // Calculate source rectangle for this piece (within the center-cropped square)
+    val srcLeft = cropOffsetX + pieceCol * pieceSizeInImage
+    val srcTop = cropOffsetY + pieceRow * pieceSizeInImage
+    
+    // Draw the piece portion to fill the entire canvas
+    drawImage(
+        image = imageBitmap,
+        srcOffset = IntOffset(srcLeft, srcTop),
+        srcSize = IntSize(pieceSizeInImage, pieceSizeInImage),
+        dstOffset = IntOffset.Zero,
+        dstSize = IntSize(canvasSize.width.roundToInt(), canvasSize.height.roundToInt())
+    )
 }
