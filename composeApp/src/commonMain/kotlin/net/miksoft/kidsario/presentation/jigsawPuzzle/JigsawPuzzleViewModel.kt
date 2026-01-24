@@ -25,8 +25,29 @@ enum class JigsawDifficulty(val displayName: String, val gridSize: Int) {
  * Add more images to the folder and add entries here.
  */
 enum class PuzzleImageResource(val resourceName: String) {
-    WHALE("puzzle_whale"),
-    HIPPO("puzzle_hippo")
+    CRANE("puzzle_crane"),
+    HIPPO("puzzle_hippo"),
+    PHOTO001("puzzle_photo001"),
+    PHOTO002("puzzle_photo002"),
+    PHOTO003("puzzle_photo003"),
+    PHOTO004("puzzle_photo004"),
+    PHOTO005("puzzle_photo005"),
+    PHOTO006("puzzle_photo006"),
+    PHOTO007("puzzle_photo007"),
+    PHOTO008("puzzle_photo008"),
+    PHOTO009("puzzle_photo009"),
+    PHOTO010("puzzle_photo010"),
+    PHOTO011("puzzle_photo011"),
+    PHOTO012("puzzle_photo012"),
+    PHOTO013("puzzle_photo013"),
+    PHOTO014("puzzle_photo014"),
+    PHOTO015("puzzle_photo015"),
+    PHOTO016("puzzle_photo016"),
+    PHOTO017("puzzle_photo017"),
+    PHOTO018("puzzle_photo018"),
+    PHOTO019("puzzle_photo019"),
+    SQUIRREL("puzzle_squirrel"),
+    WHALE("puzzle_whale")
 }
 
 /**
@@ -52,6 +73,16 @@ class JigsawPuzzleViewModel : ViewModel() {
     // Current level (increases progressively)
     private var currentLevel = 1
 
+    // Balanced rotation of images
+    private var availableImages = mutableListOf<PuzzleImageResource>()
+
+    private fun getNextImage(): PuzzleImageResource {
+        if (availableImages.isEmpty()) {
+            availableImages.addAll(PuzzleImageResource.entries.shuffled())
+        }
+        return availableImages.removeAt(0)
+    }
+
     init {
         generateNewPuzzle()
     }
@@ -68,9 +99,8 @@ class JigsawPuzzleViewModel : ViewModel() {
             }
 
             val gridSize = currentState.difficulty.gridSize
-            // Select a random image
-            val imageResources = PuzzleImageResource.values()
-            val selectedImage = imageResources[Random.nextInt(imageResources.size)]
+            // Select the next image in a balanced rotation
+            val selectedImage = getNextImage()
             
             val pieces = mutableListOf<PuzzlePiece>()
 

@@ -34,9 +34,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import kidsario.composeapp.generated.resources.Res
-import kidsario.composeapp.generated.resources.puzzle_hippo
-import kidsario.composeapp.generated.resources.puzzle_whale
+import kidsario.composeapp.generated.resources.*
 import net.miksoft.kidsario.theme.GameColors
 import org.jetbrains.compose.resources.imageResource
 import kotlin.math.min
@@ -231,8 +229,29 @@ fun JigsawPuzzleComponent(
  */
 @Composable
 fun getPuzzleImageBitmap(puzzleImage: PuzzleImageResource): ImageBitmap = when (puzzleImage) {
-    PuzzleImageResource.WHALE -> imageResource(Res.drawable.puzzle_whale)
+    PuzzleImageResource.CRANE -> imageResource(Res.drawable.puzzle_crane)
     PuzzleImageResource.HIPPO -> imageResource(Res.drawable.puzzle_hippo)
+    PuzzleImageResource.PHOTO001 -> imageResource(Res.drawable.puzzle_photo001)
+    PuzzleImageResource.PHOTO002 -> imageResource(Res.drawable.puzzle_photo002)
+    PuzzleImageResource.PHOTO003 -> imageResource(Res.drawable.puzzle_photo003)
+    PuzzleImageResource.PHOTO004 -> imageResource(Res.drawable.puzzle_photo004)
+    PuzzleImageResource.PHOTO005 -> imageResource(Res.drawable.puzzle_photo005)
+    PuzzleImageResource.PHOTO006 -> imageResource(Res.drawable.puzzle_photo006)
+    PuzzleImageResource.PHOTO007 -> imageResource(Res.drawable.puzzle_photo007)
+    PuzzleImageResource.PHOTO008 -> imageResource(Res.drawable.puzzle_photo008)
+    PuzzleImageResource.PHOTO009 -> imageResource(Res.drawable.puzzle_photo009)
+    PuzzleImageResource.PHOTO010 -> imageResource(Res.drawable.puzzle_photo010)
+    PuzzleImageResource.PHOTO011 -> imageResource(Res.drawable.puzzle_photo011)
+    PuzzleImageResource.PHOTO012 -> imageResource(Res.drawable.puzzle_photo012)
+    PuzzleImageResource.PHOTO013 -> imageResource(Res.drawable.puzzle_photo013)
+    PuzzleImageResource.PHOTO014 -> imageResource(Res.drawable.puzzle_photo014)
+    PuzzleImageResource.PHOTO015 -> imageResource(Res.drawable.puzzle_photo015)
+    PuzzleImageResource.PHOTO016 -> imageResource(Res.drawable.puzzle_photo016)
+    PuzzleImageResource.PHOTO017 -> imageResource(Res.drawable.puzzle_photo017)
+    PuzzleImageResource.PHOTO018 -> imageResource(Res.drawable.puzzle_photo018)
+    PuzzleImageResource.PHOTO019 -> imageResource(Res.drawable.puzzle_photo019)
+    PuzzleImageResource.SQUIRREL -> imageResource(Res.drawable.puzzle_squirrel)
+    PuzzleImageResource.WHALE -> imageResource(Res.drawable.puzzle_whale)
 }
 
 /**
