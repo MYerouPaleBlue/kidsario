@@ -1,13 +1,17 @@
 package net.miksoft.kidsario.presentation.jigsawPuzzle
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -24,6 +28,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -394,6 +399,7 @@ fun PuzzleBoard(
  * Individual puzzle piece view with image clipping and drag handling.
  * Uses local state for smooth dragging without recomposition on every drag event.
  * Uses Canvas-based drawing to properly center-crop non-square images.
+ * Uses graphicsLayer for GPU-accelerated transformations and spring animations for smooth snapping.
  */
 @Composable
 fun PuzzlePieceView(
@@ -424,70 +430,119 @@ fun PuzzlePieceView(
     val puzzleAreaStartY = boardHeight * 0.05f
     val cellSize = puzzleSize / gridSize
     
-    // Calculate base position - for placed pieces, use exact grid position
-    val basePieceX: Float
-    val basePieceY: Float
+    // Calculate target position - for placed pieces, use exact grid position
+    val targetPieceX: Float
+    val targetPieceY: Float
     if (piece.isPlaced) {
         // Calculate exact position centered in the correct grid cell
         val cellCenterX = puzzleAreaStartX + (piece.correctCol + 0.5f) * cellSize
         val cellCenterY = puzzleAreaStartY + (piece.correctRow + 0.5f) * cellSize
-        basePieceX = cellCenterX - pieceDisplaySize / 2
-        basePieceY = cellCenterY - pieceDisplaySize / 2
+        targetPieceX = cellCenterX - pieceDisplaySize / 2
+        targetPieceY = cellCenterY - pieceDisplaySize / 2
     } else {
         // For non-placed pieces, use the currentX/Y from ViewModel
-        basePieceX = piece.currentX * boardWidth - pieceDisplaySize / 2
-        basePieceY = piece.currentY * boardHeight - pieceDisplaySize / 2
+        targetPieceX = piece.currentX * boardWidth - pieceDisplaySize / 2
+        targetPieceY = piece.currentY * boardHeight - pieceDisplaySize / 2
     }
     
-    // Final position combines base position with local drag offset
-    val pieceX = basePieceX + dragOffsetX
-    val pieceY = basePieceY + dragOffsetY
+    // Use spring animation for smooth position transitions (especially for snap-to-place)
+    val animatedPieceX by animateFloatAsState(
+        targetValue = targetPieceX,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "pieceX"
+    )
+    val animatedPieceY by animateFloatAsState(
+        targetValue = targetPieceY,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "pieceY"
+    )
+    
+    // Animate elevation for smooth shadow transitions
+    val targetElevation = if (isDragging || isBeingDragged) 16f else if (piece.isPlaced) 2f else 8f
+    val animatedElevation by animateFloatAsState(
+        targetValue = targetElevation,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "elevation"
+    )
+    
+    // Animate scale for visual feedback during drag
+    val targetScale = if (isDragging || isBeingDragged) 1.05f else 1f
+    val animatedScale by animateFloatAsState(
+        targetValue = targetScale,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "scale"
+    )
+    
+    // Final position: use animated base position + immediate drag offset
+    // This gives smooth animations when not dragging, and immediate response during drag
+    val pieceX = if (isDragging) targetPieceX + dragOffsetX else animatedPieceX
+    val pieceY = if (isDragging) targetPieceY + dragOffsetY else animatedPieceY
 
     Box(
         modifier = Modifier
-            .offset { IntOffset(pieceX.roundToInt(), pieceY.roundToInt()) }
             .size(with(density) { pieceDisplaySize.toDp() })
             .zIndex(if (isDragging || isBeingDragged) 100f else if (piece.isPlaced) 1f else 10f)
+            // Use graphicsLayer for GPU-accelerated transformations - much smoother than offset
+            .graphicsLayer {
+                translationX = pieceX
+                translationY = pieceY
+                scaleX = animatedScale
+                scaleY = animatedScale
+            }
             .then(
                 if (!piece.isPlaced) {
                     Modifier.pointerInput(piece.id) {
-                        detectDragGestures(
-                            onDragStart = {
-                                isDragging = true
-                                dragOffsetX = 0f
-                                dragOffsetY = 0f
-                                onStartDrag()
-                            },
-                            onDrag = { change, dragAmount ->
+                        awaitEachGesture {
+                            // Wait for finger down - starts drag immediately without touch slop
+                            val down = awaitFirstDown(requireUnconsumed = false)
+                            
+                            // Start drag immediately on touch
+                            isDragging = true
+                            dragOffsetX = 0f
+                            dragOffsetY = 0f
+                            onStartDrag()
+                            
+                            // Track drag movement until finger is lifted
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                val change = event.changes.firstOrNull { it.id == down.id }
+                                if (change == null || !change.pressed) break
+                                
+                                // Calculate position delta
+                                val delta = change.position - change.previousPosition
+                                dragOffsetX += delta.x
+                                dragOffsetY += delta.y
                                 change.consume()
-                                // Update local offset for immediate visual feedback
-                                dragOffsetX += dragAmount.x
-                                dragOffsetY += dragAmount.y
-                            },
-                            onDragEnd = {
-                                // Commit the final position to ViewModel
-                                val deltaX = dragOffsetX / boardWidth
-                                val deltaY = dragOffsetY / boardHeight
-                                onDrag(deltaX, deltaY)
-                                // Reset local state
-                                dragOffsetX = 0f
-                                dragOffsetY = 0f
-                                isDragging = false
-                                onEndDrag()
-                            },
-                            onDragCancel = {
-                                // Reset without committing
-                                dragOffsetX = 0f
-                                dragOffsetY = 0f
-                                isDragging = false
-                                onEndDrag()
                             }
-                        )
+                            
+                            // Commit the final position to ViewModel
+                            val deltaX = dragOffsetX / boardWidth
+                            val deltaY = dragOffsetY / boardHeight
+                            onDrag(deltaX, deltaY)
+                            
+                            // Reset local state - animation will handle the transition
+                            dragOffsetX = 0f
+                            dragOffsetY = 0f
+                            isDragging = false
+                            onEndDrag()
+                        }
                     }
                 } else Modifier
             )
             .shadow(
-                elevation = if (isDragging || isBeingDragged) 16.dp else if (piece.isPlaced) 2.dp else 8.dp,
+                elevation = animatedElevation.dp,
                 shape = RoundedCornerShape(8.dp)
             )
             .clip(RoundedCornerShape(8.dp))

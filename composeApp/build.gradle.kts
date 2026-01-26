@@ -62,8 +62,8 @@ android {
         applicationId = "net.miksoft.kidsario"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 14
-        versionName = "14"
+        versionCode = 15
+        versionName = "15"
     }
     packaging {
         resources {
