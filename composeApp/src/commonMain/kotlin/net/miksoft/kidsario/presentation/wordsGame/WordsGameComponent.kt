@@ -9,12 +9,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -103,175 +106,250 @@ fun WordsGameComponent(
             )
         }
     ) { paddingValues ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
-                .background(GameColors.GameBackgroundColor),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                backgroundColor = GameColors.CardBackgroundColor,
-                elevation = 4.dp,
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text(
-                    text = "Pick words that start with the letter",
-                    style = MaterialTheme.typography.h6.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 22.sp
-                    ),
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colors.onSurface,
-                    modifier = Modifier.padding(16.dp)
-                )
+            val isShortHeight = maxHeight < 560.dp
+            val scrollState = rememberScrollState()
+            val contentModifier = if (isShortHeight) {
+                Modifier.verticalScroll(scrollState)
+            } else {
+                Modifier
             }
 
-            Card(
-                backgroundColor = GameColors.AlternateCardBackgroundColor,
-                elevation = 4.dp,
-                shape = RoundedCornerShape(20.dp)
+            Column(
+                modifier = contentModifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+                    .background(GameColors.GameBackgroundColor),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(if (isShortHeight) 8.dp else 16.dp)
             ) {
-                Text(
-                    text = uiState.targetLetter.toString(),
-                    fontSize = 72.sp,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colors.primary,
-                    modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
-                )
-            }
-
-            WordsScoreDisplay(
-                score = uiState.score,
-                highScore = uiState.highScore,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            TimeDisplay(
-                remainingTime = uiState.remainingTime,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-
-            if (uiState.isGameOver) {
-                GameOverPanel(
-                    score = uiState.score,
-                    onPlayAgain = { viewModel.startGame() }
-                )
-            } else if (!uiState.isGameActive) {
-                Button(
-                    onClick = { viewModel.startGame() },
-                    colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primary),
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth()
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    backgroundColor = GameColors.CardBackgroundColor,
+                    elevation = 4.dp,
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(
-                        text = "Start",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(vertical = 6.dp)
+                        text = "Pick words that start with the letter",
+                        style = MaterialTheme.typography.h6.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 22.sp
+                        ),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colors.onSurface,
+                        modifier = Modifier.padding(16.dp)
                     )
                 }
-            }
 
-            val animalImage = when (uiState.currentAnimal) {
-                WordsGameAnimal.HIPPO -> imageResource(Res.drawable.puzzle_hippo)
-                WordsGameAnimal.WHALE -> imageResource(Res.drawable.puzzle_whale)
-                WordsGameAnimal.SQUIRREL -> imageResource(Res.drawable.puzzle_squirrel)
-                WordsGameAnimal.CRANE -> imageResource(Res.drawable.puzzle_crane)
-            }
-
-            AnimatedVisibility(
-                visible = uiState.isGameActive && !uiState.isRefreshing,
-                enter = fadeIn(animationSpec = tween(200)),
-                exit = fadeOut(animationSpec = tween(200))
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                Card(
+                    backgroundColor = GameColors.AlternateCardBackgroundColor,
+                    elevation = 4.dp,
+                    shape = RoundedCornerShape(20.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            backgroundColor = GameColors.CardBackgroundColor,
-                            elevation = 6.dp,
-                            shape = RoundedCornerShape(24.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                uiState.currentOptions.forEach { option ->
-                                    Button(
-                                        onClick = { viewModel.selectWord(option) },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.surface),
-                                        shape = RoundedCornerShape(20.dp)
-                                    ) {
-                                        Text(
-                                            text = option.word,
-                                            fontSize = 20.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colors.onSurface,
-                                            modifier = Modifier.padding(6.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
+                    Text(
+                        text = uiState.targetLetter.toString(),
+                        fontSize = 72.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colors.primary,
+                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp)
+                    )
+                }
 
-                        Canvas(modifier = Modifier.size(32.dp, 16.dp)) {
-                            val tailPath = Path().apply {
-                                moveTo(size.width / 2f, size.height)
-                                lineTo(0f, 0f)
-                                lineTo(size.width, 0f)
-                                close()
-                            }
-                            drawPath(path = tailPath, color = GameColors.CardBackgroundColor)
-                        }
-                    }
+                WordsScoreDisplay(
+                    score = uiState.score,
+                    highScore = uiState.highScore,
+                    remainingTime = uiState.remainingTime,
+                    modifier = Modifier.fillMaxWidth()
+                )
 
-                    Card(
-                        backgroundColor = Color.White,
-                        elevation = 6.dp,
-                        shape = RoundedCornerShape(24.dp)
+                if (uiState.isGameOver) {
+                    GameOverPanel(
+                        score = uiState.score,
+                        onPlayAgain = { viewModel.startGame() }
+                    )
+                } else if (!uiState.isGameActive) {
+                    Button(
+                        onClick = { viewModel.startGame() },
+                        colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primary),
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Image(
-                            bitmap = animalImage,
-                            contentDescription = "Game animal",
-                            modifier = Modifier.size(140.dp),
-                            contentScale = ContentScale.Crop
+                        Text(
+                            text = "Start",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(vertical = 6.dp)
                         )
                     }
                 }
-            }
 
-            if (uiState.lastResultCorrect != null && uiState.isGameActive) {
-                val feedbackColor = if (uiState.lastResultCorrect == true) {
-                    GameColors.CorrectColor
-                } else {
-                    GameColors.IncorrectColor
+                val animalImage = when (uiState.currentAnimal) {
+                    WordsGameAnimal.HIPPO -> imageResource(Res.drawable.puzzle_hippo)
+                    WordsGameAnimal.WHALE -> imageResource(Res.drawable.puzzle_whale)
+                    WordsGameAnimal.SQUIRREL -> imageResource(Res.drawable.puzzle_squirrel)
+                    WordsGameAnimal.CRANE -> imageResource(Res.drawable.puzzle_crane)
+                }
+                val animalSize = if (isShortHeight) 110.dp else 140.dp
+
+                AnimatedVisibility(
+                    visible = uiState.isGameActive && !uiState.isRefreshing,
+                    enter = fadeIn(animationSpec = tween(200)),
+                    exit = fadeOut(animationSpec = tween(200))
+                ) {
+                    if (isShortHeight) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    backgroundColor = GameColors.CardBackgroundColor,
+                                    elevation = 6.dp,
+                                    shape = RoundedCornerShape(24.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        uiState.currentOptions.forEach { option ->
+                                            Button(
+                                                onClick = { viewModel.selectWord(option) },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.surface),
+                                                shape = RoundedCornerShape(20.dp)
+                                            ) {
+                                                Text(
+                                                    text = option.word,
+                                                    fontSize = 20.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colors.onSurface,
+                                                    modifier = Modifier.padding(6.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Canvas(modifier = Modifier.size(32.dp, 16.dp)) {
+                                    val tailPath = Path().apply {
+                                        moveTo(size.width / 2f, size.height)
+                                        lineTo(0f, 0f)
+                                        lineTo(size.width, 0f)
+                                        close()
+                                    }
+                                    drawPath(path = tailPath, color = GameColors.CardBackgroundColor)
+                                }
+                            }
+
+                            Card(
+                                backgroundColor = Color.White,
+                                elevation = 6.dp,
+                                shape = RoundedCornerShape(24.dp)
+                            ) {
+                                Image(
+                                    bitmap = animalImage,
+                                    contentDescription = "Game animal",
+                                    modifier = Modifier.size(animalSize),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    backgroundColor = GameColors.CardBackgroundColor,
+                                    elevation = 6.dp,
+                                    shape = RoundedCornerShape(24.dp)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(16.dp),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        uiState.currentOptions.forEach { option ->
+                                            Button(
+                                                onClick = { viewModel.selectWord(option) },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.surface),
+                                                shape = RoundedCornerShape(20.dp)
+                                            ) {
+                                                Text(
+                                                    text = option.word,
+                                                    fontSize = 20.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colors.onSurface,
+                                                    modifier = Modifier.padding(6.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Canvas(modifier = Modifier.size(32.dp, 16.dp)) {
+                                    val tailPath = Path().apply {
+                                        moveTo(size.width / 2f, size.height)
+                                        lineTo(0f, 0f)
+                                        lineTo(size.width, 0f)
+                                        close()
+                                    }
+                                    drawPath(path = tailPath, color = GameColors.CardBackgroundColor)
+                                }
+                            }
+
+                            Card(
+                                backgroundColor = Color.White,
+                                elevation = 6.dp,
+                                shape = RoundedCornerShape(24.dp)
+                            ) {
+                                Image(
+                                    bitmap = animalImage,
+                                    contentDescription = "Game animal",
+                                    modifier = Modifier.size(animalSize),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
+                    }
                 }
 
-                Surface(
-                    color = feedbackColor,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier
-                        .padding(top = 8.dp)
-                        .shadow(8.dp, RoundedCornerShape(16.dp))
-                ) {
-                    Text(
-                        text = if (uiState.lastResultCorrect == true) "Great choice!" else "Try another word!",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                    )
+                if (uiState.lastResultCorrect != null && uiState.isGameActive) {
+                    val feedbackColor = if (uiState.lastResultCorrect == true) {
+                        GameColors.CorrectColor
+                    } else {
+                        GameColors.IncorrectColor
+                    }
+
+                    Surface(
+                        color = feedbackColor,
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier
+                            .padding(top = 8.dp)
+                            .shadow(8.dp, RoundedCornerShape(16.dp))
+                    ) {
+                        Text(
+                            text = if (uiState.lastResultCorrect == true) "Great choice!" else "Try another word!",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
                 }
             }
         }
@@ -282,19 +360,22 @@ fun WordsGameComponent(
 private fun WordsScoreDisplay(
     score: Int,
     highScore: Int,
+    remainingTime: Int,
     modifier: Modifier = Modifier
 ) {
     Row(
         modifier = modifier,
-        horizontalArrangement = Arrangement.SpaceEvenly
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Card(
+            modifier = Modifier.weight(1f),
             backgroundColor = GameColors.CardBackgroundColor,
             elevation = 4.dp,
             shape = RoundedCornerShape(12.dp)
         ) {
             Column(
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -304,7 +385,7 @@ private fun WordsScoreDisplay(
                 )
                 Text(
                     text = "$score",
-                    fontSize = 32.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = GameColors.CircleColor
                 )
@@ -312,12 +393,13 @@ private fun WordsScoreDisplay(
         }
 
         Card(
+            modifier = Modifier.weight(1f),
             backgroundColor = GameColors.AlternateCardBackgroundColor,
             elevation = 4.dp,
             shape = RoundedCornerShape(12.dp)
         ) {
             Column(
-                modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -327,40 +409,36 @@ private fun WordsScoreDisplay(
                 )
                 Text(
                     text = "$highScore",
-                    fontSize = 32.sp,
+                    fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = GameColors.HeartColor
                 )
             }
         }
-    }
-}
 
-@Composable
-private fun TimeDisplay(remainingTime: Int, modifier: Modifier = Modifier) {
-    Card(
-        backgroundColor = MaterialTheme.colors.primaryVariant,
-        elevation = 4.dp,
-        shape = RoundedCornerShape(20.dp),
-        modifier = modifier
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Card(
+            modifier = Modifier.weight(1f),
+            backgroundColor = MaterialTheme.colors.primaryVariant,
+            elevation = 4.dp,
+            shape = RoundedCornerShape(12.dp)
         ) {
-            Text(
-                text = "Time",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.White
-            )
-            Text(
-                text = "$remainingTime s",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.White
-            )
+            Column(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Time",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.White
+                )
+                Text(
+                    text = "$remainingTime s",
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
         }
     }
 }
