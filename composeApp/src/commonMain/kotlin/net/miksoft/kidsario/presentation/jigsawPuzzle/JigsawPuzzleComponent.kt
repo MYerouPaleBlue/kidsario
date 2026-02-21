@@ -195,7 +195,12 @@ fun JigsawPuzzleComponent(
                         draggedPieceId = uiState.draggedPieceId,
                         onStartDrag = { pieceId -> viewModel.startDragging(pieceId) },
                         onDrag = { pieceId, x, y -> viewModel.updatePiecePosition(pieceId, x, y) },
-                        onEndDrag = { pieceId -> viewModel.endDragging(pieceId) },
+                        onEndDrag = { pieceId, boardWidth, boardHeight ->
+                            viewModel.endDragging(pieceId, boardWidth, boardHeight)
+                        },
+                        onLayoutUpdated = { boardWidth, boardHeight ->
+                            viewModel.updateTrayLayout(boardWidth, boardHeight)
+                        },
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -270,7 +275,8 @@ fun PuzzleBoard(
     draggedPieceId: Int?,
     onStartDrag: (Int) -> Unit,
     onDrag: (Int, Float, Float) -> Unit,
-    onEndDrag: (Int) -> Unit,
+    onEndDrag: (Int, Float, Float) -> Unit,
+    onLayoutUpdated: (Float, Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var boardSize by remember { mutableStateOf(IntSize.Zero) }
@@ -280,24 +286,22 @@ fun PuzzleBoard(
         modifier = modifier
             .onSizeChanged { boardSize = it }
     ) {
+        LaunchedEffect(boardSize) {
+            if (boardSize.width > 0 && boardSize.height > 0) {
+                onLayoutUpdated(boardSize.width.toFloat(), boardSize.height.toFloat())
+            }
+        }
         if (boardSize.width > 0 && boardSize.height > 0) {
             val boardWidth = boardSize.width.toFloat()
             val boardHeight = boardSize.height.toFloat()
 
-            // Calculate square puzzle area that fits in the top portion
-            val maxPuzzleWidth = boardWidth * 0.8f
-            val maxPuzzleHeight = boardHeight * 0.5f
-            val puzzleSize = minOf(maxPuzzleWidth, maxPuzzleHeight)
-            
-            // Center the square puzzle area horizontally
-            val puzzleAreaStartX = (boardWidth - puzzleSize) / 2f
-            val puzzleAreaEndX = puzzleAreaStartX + puzzleSize
-            val puzzleAreaStartY = boardHeight * 0.05f
-            val puzzleAreaEndY = puzzleAreaStartY + puzzleSize
-            val puzzleAreaWidth = puzzleSize
-            val puzzleAreaHeight = puzzleSize
+            val layout = calculatePuzzleLayout(boardWidth, boardHeight)
+            val puzzleAreaStartX = layout.puzzleAreaStartX
+            val puzzleAreaStartY = layout.puzzleAreaStartY
+            val puzzleAreaWidth = layout.puzzleSize
+            val puzzleAreaHeight = layout.puzzleSize
 
-            val cellSize = puzzleSize / gridSize
+            val cellSize = layout.puzzleSize / gridSize
             val cellWidth = cellSize
             val cellHeight = cellSize
             val pieceDisplaySize = cellSize * 0.95f
@@ -332,12 +336,13 @@ fun PuzzleBoard(
             }
 
             // Draw tray area indicator
-            val trayY = boardHeight * 0.6f
             Box(
                 modifier = Modifier
-                    .offset { IntOffset(0, trayY.roundToInt()) }
-                    .fillMaxWidth()
-                    .height(with(density) { (boardHeight - trayY).toDp() })
+                    .offset { IntOffset(layout.trayStartX.roundToInt(), layout.trayStartY.roundToInt()) }
+                    .size(
+                        with(density) { layout.trayWidth.toDp() },
+                        with(density) { layout.trayHeight.toDp() }
+                    )
                     .background(Color.LightGray.copy(alpha = 0.15f))
             )
 
@@ -370,7 +375,7 @@ fun PuzzleBoard(
                     isBeingDragged = false,
                     onStartDrag = { onStartDrag(piece.id) },
                     onDrag = { x, y -> onDrag(piece.id, x, y) },
-                    onEndDrag = { onEndDrag(piece.id) }
+                    onEndDrag = { onEndDrag(piece.id, boardWidth, boardHeight) }
                 )
             }
 
@@ -387,7 +392,7 @@ fun PuzzleBoard(
                         isBeingDragged = true,
                         onStartDrag = { onStartDrag(piece.id) },
                         onDrag = { x, y -> onDrag(piece.id, x, y) },
-                        onEndDrag = { onEndDrag(piece.id) }
+                        onEndDrag = { onEndDrag(piece.id, boardWidth, boardHeight) }
                     )
                 }
             }
@@ -423,12 +428,10 @@ fun PuzzlePieceView(
     var isDragging by remember { mutableStateOf(false) }
     
     // Calculate puzzle area dimensions (must match PuzzleBoard calculations)
-    val maxPuzzleWidth = boardWidth * 0.8f
-    val maxPuzzleHeight = boardHeight * 0.5f
-    val puzzleSize = minOf(maxPuzzleWidth, maxPuzzleHeight)
-    val puzzleAreaStartX = (boardWidth - puzzleSize) / 2f
-    val puzzleAreaStartY = boardHeight * 0.05f
-    val cellSize = puzzleSize / gridSize
+    val layout = calculatePuzzleLayout(boardWidth, boardHeight)
+    val puzzleAreaStartX = layout.puzzleAreaStartX
+    val puzzleAreaStartY = layout.puzzleAreaStartY
+    val cellSize = layout.puzzleSize / gridSize
     
     // Calculate target position - for placed pieces, use exact grid position
     val targetPieceX: Float

@@ -62,6 +62,11 @@ data class PuzzlePiece(
     val isPlaced: Boolean = false
 )
 
+enum class TrayLayoutMode {
+    BOTTOM,
+    SIDE
+}
+
 /**
  * ViewModel for the Jigsaw Puzzle mini game.
  */
@@ -75,6 +80,8 @@ class JigsawPuzzleViewModel : ViewModel() {
 
     // Balanced rotation of images
     private var availableImages = mutableListOf<PuzzleImageResource>()
+
+    private var trayLayoutMode: TrayLayoutMode? = null
 
     private fun getNextImage(): PuzzleImageResource {
         if (availableImages.isEmpty()) {
@@ -93,6 +100,8 @@ class JigsawPuzzleViewModel : ViewModel() {
     fun generateNewPuzzle(advanceLevel: Boolean = false) {
         viewModelScope.launch {
             val currentState = _uiState.value
+
+            trayLayoutMode = null
 
             if (advanceLevel) {
                 currentLevel++
@@ -170,37 +179,89 @@ class JigsawPuzzleViewModel : ViewModel() {
         _uiState.value = currentState.copy(pieces = updatedPieces)
     }
 
+    fun updateTrayLayout(boardWidth: Float, boardHeight: Float) {
+        val layout = calculatePuzzleLayout(boardWidth, boardHeight)
+        val targetMode = if (layout.isShortHeight) TrayLayoutMode.SIDE else TrayLayoutMode.BOTTOM
+
+        if (trayLayoutMode == targetMode) return
+
+        trayLayoutMode = targetMode
+
+        val currentState = _uiState.value
+        if (currentState.pieces.isEmpty()) return
+
+        val updatedPieces = when (targetMode) {
+            TrayLayoutMode.SIDE -> {
+                val unplacedPieces = currentState.pieces.filter { !it.isPlaced }
+                val columns = layout.trayColumns.coerceAtLeast(1)
+                val rows = (unplacedPieces.size + columns - 1) / columns
+                val cellWidth = layout.trayWidth / columns
+                val cellHeight = layout.trayHeight / rows.coerceAtLeast(1)
+
+                val positions = mutableMapOf<Int, Pair<Float, Float>>()
+                unplacedPieces.forEachIndexed { index, piece ->
+                    val col = index % columns
+                    val row = index / columns
+                    val centerX = layout.trayStartX + cellWidth * (col + 0.5f)
+                    val centerY = layout.trayStartY + cellHeight * (row + 0.5f)
+                    positions[piece.id] = Pair(
+                        (centerX / boardWidth).coerceIn(0.05f, 0.95f),
+                        (centerY / boardHeight).coerceIn(0.05f, 0.95f)
+                    )
+                }
+
+                currentState.pieces.map { piece ->
+                    val position = positions[piece.id]
+                    if (position != null) {
+                        piece.copy(currentX = position.first, currentY = position.second)
+                    } else {
+                        piece
+                    }
+                }
+            }
+            TrayLayoutMode.BOTTOM -> {
+                currentState.pieces.map { piece ->
+                    if (!piece.isPlaced) {
+                        piece.copy(
+                            currentX = Random.nextFloat() * 0.7f + 0.15f,
+                            currentY = Random.nextFloat() * 0.25f + 0.7f
+                        )
+                    } else {
+                        piece
+                    }
+                }
+            }
+        }
+
+        _uiState.value = currentState.copy(pieces = updatedPieces)
+    }
+
     /**
      * End dragging and check if the piece snaps to its correct position.
      */
-    fun endDragging(pieceId: Int) {
+    fun endDragging(pieceId: Int, boardWidth: Float, boardHeight: Float) {
         if (_uiState.value.isComplete) return
 
         val currentState = _uiState.value
         val gridSize = currentState.gridSize
         val piece = currentState.pieces.find { it.id == pieceId } ?: return
 
-        // Calculate the target grid position based on current coordinates
-        // The puzzle grid is a square that fits in the top portion of the canvas
-        // Use normalized coordinates (0-1 range based on board dimensions)
-        // These values match the calculations in JigsawPuzzleComponent
-        val maxPuzzleWidth = 0.8f  // 80% of board width
-        val maxPuzzleHeight = 0.5f // 50% of board height
-        val puzzleSize = minOf(maxPuzzleWidth, maxPuzzleHeight) // Square puzzle area
-        
-        val puzzleAreaStartX = (1f - puzzleSize) / 2f  // Centered horizontally
-        val puzzleAreaEndX = puzzleAreaStartX + puzzleSize
-        val puzzleAreaStartY = 0.05f
-        val puzzleAreaEndY = puzzleAreaStartY + puzzleSize
+        val layout = calculatePuzzleLayout(boardWidth, boardHeight)
+        val puzzleAreaStartX = layout.puzzleAreaStartX
+        val puzzleAreaEndX = layout.puzzleAreaStartX + layout.puzzleSize
+        val puzzleAreaStartY = layout.puzzleAreaStartY
+        val puzzleAreaEndY = layout.puzzleAreaStartY + layout.puzzleSize
+        val cellSize = layout.puzzleSize / gridSize
 
-        val cellSize = puzzleSize / gridSize
+        val currentX = piece.currentX * boardWidth
+        val currentY = piece.currentY * boardHeight
 
-        val targetCol = ((piece.currentX - puzzleAreaStartX) / cellSize).toInt()
-        val targetRow = ((piece.currentY - puzzleAreaStartY) / cellSize).toInt()
+        val targetCol = ((currentX - puzzleAreaStartX) / cellSize).toInt()
+        val targetRow = ((currentY - puzzleAreaStartY) / cellSize).toInt()
 
         // Check if the piece is within the puzzle area and in the correct position
-        val isInPuzzleArea = piece.currentX in puzzleAreaStartX..puzzleAreaEndX &&
-                piece.currentY in puzzleAreaStartY..puzzleAreaEndY
+        val isInPuzzleArea = currentX in puzzleAreaStartX..puzzleAreaEndX &&
+                currentY in puzzleAreaStartY..puzzleAreaEndY
 
         val isCorrectPosition = isInPuzzleArea &&
                 targetCol == piece.correctCol &&
@@ -213,8 +274,8 @@ class JigsawPuzzleViewModel : ViewModel() {
 
         val updatedPieces = if (isCorrectPosition && !isPositionOccupied) {
             // Snap to correct position
-            val correctX = puzzleAreaStartX + (piece.correctCol + 0.5f) * cellSize
-            val correctY = puzzleAreaStartY + (piece.correctRow + 0.5f) * cellSize
+            val correctX = (puzzleAreaStartX + (piece.correctCol + 0.5f) * cellSize) / boardWidth
+            val correctY = (puzzleAreaStartY + (piece.correctRow + 0.5f) * cellSize) / boardHeight
 
             currentState.pieces.map { p ->
                 if (p.id == pieceId) {
