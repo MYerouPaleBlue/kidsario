@@ -122,6 +122,24 @@ fun HomeComponent(
             }
         ),
         MiniGame(
+            id = "words_game",
+            name = "Words Game",
+            color = GameColors.HeartColor,
+            iconDrawer = { mod ->
+                Box(
+                    modifier = mod,
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "W",
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+        ),
+        MiniGame(
             id = "maze",
             name = "Maze Game",
             color = GameColors.TriangleColor,
