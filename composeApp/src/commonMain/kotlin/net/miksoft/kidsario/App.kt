@@ -21,6 +21,8 @@ import net.miksoft.kidsario.presentation.jigsawPuzzle.JigsawPuzzleComponent
 import net.miksoft.kidsario.presentation.jigsawPuzzle.JigsawPuzzleViewModel
 import net.miksoft.kidsario.presentation.jumpingGame.JumpingGameComponent
 import net.miksoft.kidsario.presentation.jumpingGame.JumpingGameViewModel
+import net.miksoft.kidsario.presentation.mathGame.MathGameComponent
+import net.miksoft.kidsario.presentation.mathGame.MathGameViewModel
 import net.miksoft.kidsario.presentation.wordsGame.WordsGameComponent
 import net.miksoft.kidsario.presentation.wordsGame.WordsGameViewModel
 import net.miksoft.kidsario.theme.KidsarioTheme
@@ -31,6 +33,7 @@ enum class Screen {
     COUNTING_OBJECTS,
     DRAWING_LETTERS,
     WORDS_GAME,
+    MATH_GAME,
     MAZE,
     FREE_DRAWING,
     JIGSAW_PUZZLE,
@@ -49,6 +52,7 @@ fun App() {
         val countingObjectsViewModel = remember { CountingObjectsViewModel() }
         val drawingLettersViewModel = remember { DrawingLettersViewModel() }
         val wordsGameViewModel = remember { WordsGameViewModel() }
+        val mathGameViewModel = remember { MathGameViewModel() }
         val mazeViewModel = remember { MazeViewModel() }
         val freeDrawingViewModel = remember { FreeDrawingViewModel() }
         val jigsawPuzzleViewModel = remember { JigsawPuzzleViewModel() }
@@ -60,6 +64,7 @@ fun App() {
                 "counting_objects" -> currentScreen = Screen.COUNTING_OBJECTS
                 "drawing_letters" -> currentScreen = Screen.DRAWING_LETTERS
                 "words_game" -> currentScreen = Screen.WORDS_GAME
+                "math_game" -> currentScreen = Screen.MATH_GAME
                 "maze" -> currentScreen = Screen.MAZE
                 "free_drawing" -> currentScreen = Screen.FREE_DRAWING
                 "jigsaw_puzzle" -> currentScreen = Screen.JIGSAW_PUZZLE
@@ -106,6 +111,13 @@ fun App() {
                 WordsGameComponent(
                     modifier = modifier,
                     viewModel = wordsGameViewModel,
+                    onNavigateBack = onNavigateBack
+                )
+            }
+            Screen.MATH_GAME -> {
+                MathGameComponent(
+                    modifier = modifier,
+                    viewModel = mathGameViewModel,
                     onNavigateBack = onNavigateBack
                 )
             }

@@ -140,6 +140,24 @@ fun HomeComponent(
             }
         ),
         MiniGame(
+            id = "math_game",
+            name = "Math Game",
+            color = GameColors.SquareColor,
+            iconDrawer = { mod ->
+                Box(
+                    modifier = mod,
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "1+2",
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+            }
+        ),
+        MiniGame(
             id = "maze",
             name = "Maze Game",
             color = GameColors.TriangleColor,
