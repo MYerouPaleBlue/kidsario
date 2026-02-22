@@ -67,6 +67,54 @@ enum class TrayLayoutMode {
     SIDE
 }
 
+internal fun positionPiecesForLayout(
+    pieces: List<PuzzlePiece>,
+    layout: PuzzleLayout,
+    boardWidth: Float,
+    boardHeight: Float,
+    random: Random = Random.Default
+): List<PuzzlePiece> {
+    return if (layout.isShortHeight) {
+        val unplacedPieces = pieces.filter { !it.isPlaced }
+        val columns = layout.trayColumns.coerceAtLeast(1)
+        val rows = (unplacedPieces.size + columns - 1) / columns
+        val cellWidth = layout.trayWidth / columns
+        val cellHeight = layout.trayHeight / rows.coerceAtLeast(1)
+
+        val positions = mutableMapOf<Int, Pair<Float, Float>>()
+        unplacedPieces.forEachIndexed { index, piece ->
+            val col = index % columns
+            val row = index / columns
+            val centerX = layout.trayStartX + cellWidth * (col + 0.5f)
+            val centerY = layout.trayStartY + cellHeight * (row + 0.5f)
+            positions[piece.id] = Pair(
+                (centerX / boardWidth).coerceIn(0.05f, 0.95f),
+                (centerY / boardHeight).coerceIn(0.05f, 0.95f)
+            )
+        }
+
+        pieces.map { piece ->
+            val position = positions[piece.id]
+            if (position != null) {
+                piece.copy(currentX = position.first, currentY = position.second)
+            } else {
+                piece
+            }
+        }
+    } else {
+        pieces.map { piece ->
+            if (!piece.isPlaced) {
+                piece.copy(
+                    currentX = random.nextFloat() * 0.7f + 0.15f,
+                    currentY = random.nextFloat() * 0.25f + 0.7f
+                )
+            } else {
+                piece
+            }
+        }
+    }
+}
+
 /**
  * ViewModel for the Jigsaw Puzzle mini game.
  */
@@ -82,6 +130,8 @@ class JigsawPuzzleViewModel : ViewModel() {
     private var availableImages = mutableListOf<PuzzleImageResource>()
 
     private var trayLayoutMode: TrayLayoutMode? = null
+    private var lastBoardWidth: Float? = null
+    private var lastBoardHeight: Float? = null
 
     private fun getNextImage(): PuzzleImageResource {
         if (availableImages.isEmpty()) {
@@ -133,8 +183,18 @@ class JigsawPuzzleViewModel : ViewModel() {
             // Shuffle the pieces
             val shuffledPieces = pieces.shuffled()
 
+            val boardWidth = lastBoardWidth
+            val boardHeight = lastBoardHeight
+            val positionedPieces = if (boardWidth != null && boardHeight != null) {
+                val layout = calculatePuzzleLayout(boardWidth, boardHeight)
+                trayLayoutMode = if (layout.isShortHeight) TrayLayoutMode.SIDE else TrayLayoutMode.BOTTOM
+                positionPiecesForLayout(shuffledPieces, layout, boardWidth, boardHeight)
+            } else {
+                shuffledPieces
+            }
+
             _uiState.value = JigsawPuzzleUiState(
-                pieces = shuffledPieces,
+                pieces = positionedPieces,
                 difficulty = currentState.difficulty,
                 puzzleImage = selectedImage,
                 level = currentLevel,
@@ -180,6 +240,8 @@ class JigsawPuzzleViewModel : ViewModel() {
     }
 
     fun updateTrayLayout(boardWidth: Float, boardHeight: Float) {
+        lastBoardWidth = boardWidth
+        lastBoardHeight = boardHeight
         val layout = calculatePuzzleLayout(boardWidth, boardHeight)
         val targetMode = if (layout.isShortHeight) TrayLayoutMode.SIDE else TrayLayoutMode.BOTTOM
 
@@ -190,48 +252,7 @@ class JigsawPuzzleViewModel : ViewModel() {
         val currentState = _uiState.value
         if (currentState.pieces.isEmpty()) return
 
-        val updatedPieces = when (targetMode) {
-            TrayLayoutMode.SIDE -> {
-                val unplacedPieces = currentState.pieces.filter { !it.isPlaced }
-                val columns = layout.trayColumns.coerceAtLeast(1)
-                val rows = (unplacedPieces.size + columns - 1) / columns
-                val cellWidth = layout.trayWidth / columns
-                val cellHeight = layout.trayHeight / rows.coerceAtLeast(1)
-
-                val positions = mutableMapOf<Int, Pair<Float, Float>>()
-                unplacedPieces.forEachIndexed { index, piece ->
-                    val col = index % columns
-                    val row = index / columns
-                    val centerX = layout.trayStartX + cellWidth * (col + 0.5f)
-                    val centerY = layout.trayStartY + cellHeight * (row + 0.5f)
-                    positions[piece.id] = Pair(
-                        (centerX / boardWidth).coerceIn(0.05f, 0.95f),
-                        (centerY / boardHeight).coerceIn(0.05f, 0.95f)
-                    )
-                }
-
-                currentState.pieces.map { piece ->
-                    val position = positions[piece.id]
-                    if (position != null) {
-                        piece.copy(currentX = position.first, currentY = position.second)
-                    } else {
-                        piece
-                    }
-                }
-            }
-            TrayLayoutMode.BOTTOM -> {
-                currentState.pieces.map { piece ->
-                    if (!piece.isPlaced) {
-                        piece.copy(
-                            currentX = Random.nextFloat() * 0.7f + 0.15f,
-                            currentY = Random.nextFloat() * 0.25f + 0.7f
-                        )
-                    } else {
-                        piece
-                    }
-                }
-            }
-        }
+        val updatedPieces = positionPiecesForLayout(currentState.pieces, layout, boardWidth, boardHeight)
 
         _uiState.value = currentState.copy(pieces = updatedPieces)
     }
