@@ -111,7 +111,8 @@ fun WordsGameComponent(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            val isShortHeight = maxHeight < 560.dp
+            val layout = calculateWordsGameLayout(maxHeight)
+            val isShortHeight = layout.isShortHeight
             val scrollState = rememberScrollState()
             val contentModifier = if (isShortHeight) {
                 Modifier.verticalScroll(scrollState)
@@ -195,7 +196,10 @@ fun WordsGameComponent(
                     WordsGameAnimal.SQUIRREL -> imageResource(Res.drawable.puzzle_squirrel)
                     WordsGameAnimal.CRANE -> imageResource(Res.drawable.puzzle_crane)
                 }
-                val animalSize = if (isShortHeight) 110.dp else 140.dp
+                val animalSize = layout.animalSize
+                val wordFontSize = layout.wordFontSize
+                val wordPadding = layout.wordPadding
+                val wordSpacing = layout.wordSpacing
 
                 AnimatedVisibility(
                     visible = uiState.isGameActive && !uiState.isRefreshing,
@@ -220,7 +224,7 @@ fun WordsGameComponent(
                                 ) {
                                     Column(
                                         modifier = Modifier.padding(16.dp),
-                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                        verticalArrangement = Arrangement.spacedBy(wordSpacing)
                                     ) {
                                         uiState.currentOptions.forEach { option ->
                                             Button(
@@ -231,10 +235,10 @@ fun WordsGameComponent(
                                             ) {
                                                 Text(
                                                     text = option.word,
-                                                    fontSize = 20.sp,
+                                                    fontSize = wordFontSize,
                                                     fontWeight = FontWeight.Bold,
                                                     color = MaterialTheme.colors.onSurface,
-                                                    modifier = Modifier.padding(6.dp)
+                                                    modifier = Modifier.padding(wordPadding)
                                                 )
                                             }
                                         }
@@ -252,17 +256,21 @@ fun WordsGameComponent(
                                 }
                             }
 
-                            Card(
-                                backgroundColor = Color.White,
-                                elevation = 6.dp,
-                                shape = RoundedCornerShape(24.dp)
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
                             ) {
-                                Image(
-                                    bitmap = animalImage,
-                                    contentDescription = "Game animal",
-                                    modifier = Modifier.size(animalSize),
-                                    contentScale = ContentScale.Crop
-                                )
+                                Card(
+                                    backgroundColor = Color.White,
+                                    elevation = 6.dp,
+                                    shape = RoundedCornerShape(24.dp)
+                                ) {
+                                    Image(
+                                        bitmap = animalImage,
+                                        contentDescription = "Game animal",
+                                        modifier = Modifier.size(animalSize),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                }
                             }
                         }
                     } else {
