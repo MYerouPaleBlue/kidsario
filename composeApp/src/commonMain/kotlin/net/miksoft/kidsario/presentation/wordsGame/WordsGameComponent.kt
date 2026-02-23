@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -200,6 +201,8 @@ fun WordsGameComponent(
                 val wordFontSize = layout.wordFontSize
                 val wordPadding = layout.wordPadding
                 val wordSpacing = layout.wordSpacing
+                val optionsMaxHeight = layout.optionsMaxHeight
+                val optionsScrollState = rememberScrollState()
 
                 AnimatedVisibility(
                     visible = uiState.isGameActive && !uiState.isRefreshing,
@@ -210,7 +213,7 @@ fun WordsGameComponent(
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.Top
                         ) {
                             Column(
                                 modifier = Modifier.weight(1f),
@@ -223,7 +226,10 @@ fun WordsGameComponent(
                                     shape = RoundedCornerShape(24.dp)
                                 ) {
                                     Column(
-                                        modifier = Modifier.padding(16.dp),
+                                        modifier = Modifier
+                                            .heightIn(max = optionsMaxHeight)
+                                            .verticalScroll(optionsScrollState)
+                                            .padding(16.dp),
                                         verticalArrangement = Arrangement.spacedBy(wordSpacing)
                                     ) {
                                         uiState.currentOptions.forEach { option ->

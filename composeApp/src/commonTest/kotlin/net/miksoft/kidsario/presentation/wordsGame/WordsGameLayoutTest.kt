@@ -16,6 +16,7 @@ class WordsGameLayoutTest {
         assertEquals(18.sp, layout.wordFontSize)
         assertEquals(4.dp, layout.wordPadding)
         assertEquals(8.dp, layout.wordSpacing)
+        assertEquals(225.dp, layout.optionsMaxHeight)
     }
 
     @Test
@@ -27,5 +28,6 @@ class WordsGameLayoutTest {
         assertEquals(20.sp, layout.wordFontSize)
         assertEquals(6.dp, layout.wordPadding)
         assertEquals(12.dp, layout.wordSpacing)
+        assertEquals(800.dp, layout.optionsMaxHeight)
     }
 }
