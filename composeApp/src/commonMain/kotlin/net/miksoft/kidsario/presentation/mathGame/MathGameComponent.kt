@@ -56,11 +56,9 @@ fun MathGameComponent(
     if (uiState.showSettingsDialog) {
         MathGameSettingsDialog(
             selectedRange = uiState.rangeOption,
-            selectedDuration = uiState.timerDuration,
             selectedOptionCount = uiState.optionCount,
             selectedOperations = uiState.allowedOperations,
             onRangeSelected = viewModel::changeRangeOption,
-            onDurationSelected = viewModel::changeTimerDuration,
             onOptionCountSelected = viewModel::changeOptionCount,
             onOperationToggle = viewModel::toggleOperation,
             onDismiss = viewModel::toggleSettingsDialog
@@ -130,8 +128,7 @@ fun MathGameComponent(
 
             MathScoreDisplay(
                 score = uiState.score,
-                highScore = uiState.highScore,
-                remainingTime = uiState.remainingTime
+                highScore = uiState.highScore
             )
 
             MathAnimalPrompt(
@@ -157,7 +154,7 @@ fun MathGameComponent(
                 )
             }
 
-            if (!uiState.isGameActive && !uiState.isGameOver) {
+            if (!uiState.isGameActive) {
                 Button(
                     onClick = viewModel::startGame,
                     colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primary),
@@ -174,25 +171,18 @@ fun MathGameComponent(
                 }
             }
 
-            if (uiState.isGameOver) {
-                MathGameOverPanel(
-                    score = uiState.score,
-                    onPlayAgain = viewModel::playAgain
-                )
-            }
         }
     }
 }
 
 @Composable
-private fun MathScoreDisplay(score: Int, highScore: Int, remainingTime: Int) {
+private fun MathScoreDisplay(score: Int, highScore: Int) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         ScoreCard(title = "Score", value = score.toString())
         ScoreCard(title = "Best", value = highScore.toString())
-        ScoreCard(title = "Time", value = "${remainingTime}s")
     }
 }
 
@@ -303,51 +293,11 @@ private fun MathOptionsGrid(
 }
 
 @Composable
-private fun MathGameOverPanel(
-    score: Int,
-    onPlayAgain: () -> Unit
-) {
-    Card(
-        backgroundColor = GameColors.CardBackgroundColor,
-        elevation = 6.dp,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.padding(24.dp)
-        ) {
-            Text(
-                text = "Time's up!",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "You solved $score problems",
-                fontSize = 18.sp
-            )
-            Button(
-                onClick = onPlayAgain,
-                colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.primary)
-            ) {
-                Text(
-                    text = "Play Again",
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun MathGameSettingsDialog(
     selectedRange: MathRangeOption,
-    selectedDuration: Int,
     selectedOptionCount: Int,
     selectedOperations: Set<MathOperation>,
     onRangeSelected: (MathRangeOption) -> Unit,
-    onDurationSelected: (Int) -> Unit,
     onOptionCountSelected: (Int) -> Unit,
     onOperationToggle: (MathOperation) -> Unit,
     onDismiss: () -> Unit
@@ -381,17 +331,6 @@ private fun MathGameSettingsDialog(
                             text = operation.symbol,
                             isSelected = selectedOperations.contains(operation),
                             onClick = { onOperationToggle(operation) }
-                        )
-                    }
-                }
-
-                Text("Timer", fontWeight = FontWeight.Bold)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    listOf(30, 60, 90).forEach { duration ->
-                        SettingsButton(
-                            text = "${duration}s",
-                            isSelected = duration == selectedDuration,
-                            onClick = { onDurationSelected(duration) }
                         )
                     }
                 }

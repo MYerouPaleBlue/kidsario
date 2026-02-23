@@ -18,15 +18,12 @@ enum class MathGameAnimal(val displayName: String) {
 data class MathGameUiState(
     val score: Int = 0,
     val highScore: Int = 0,
-    val remainingTime: Int = 60,
-    val timerDuration: Int = 60,
     val optionCount: Int = 3,
     val rangeOption: MathRangeOption = MathRangeOption.SMALL,
     val allowedOperations: Set<MathOperation> = setOf(MathOperation.ADD, MathOperation.SUBTRACT),
     val currentProblem: MathProblem = MathProblem(1, 1, MathOperation.ADD),
     val options: List<MathOption> = emptyList(),
     val isGameActive: Boolean = false,
-    val isGameOver: Boolean = false,
     val isRefreshing: Boolean = false,
     val showSettingsDialog: Boolean = false,
     val lastResultCorrect: Boolean? = null,
@@ -37,7 +34,6 @@ class MathGameViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(MathGameUiState())
     val uiState = _uiState.asStateFlow()
 
-    private var timerJob: Job? = null
     private var refreshJob: Job? = null
     private val animals = MathGameAnimal.values().toList()
 
@@ -49,15 +45,11 @@ class MathGameViewModel : ViewModel() {
         stopGame()
         resetGameState(keepHighScore = true)
         _uiState.value = _uiState.value.copy(
-            isGameActive = true,
-            isGameOver = false,
-            remainingTime = _uiState.value.timerDuration
+            isGameActive = true
         )
-        startTimer()
     }
 
     fun stopGame() {
-        timerJob?.cancel()
         refreshJob?.cancel()
         _uiState.value = _uiState.value.copy(isGameActive = false)
     }
@@ -66,15 +58,6 @@ class MathGameViewModel : ViewModel() {
         _uiState.value = _uiState.value.copy(showSettingsDialog = !_uiState.value.showSettingsDialog)
     }
 
-    fun changeTimerDuration(duration: Int) {
-        stopGame()
-        _uiState.value = _uiState.value.copy(
-            timerDuration = duration,
-            remainingTime = duration,
-            showSettingsDialog = false
-        )
-        resetGameState(keepHighScore = true)
-    }
 
     fun changeOptionCount(count: Int) {
         stopGame()
@@ -165,19 +148,4 @@ class MathGameViewModel : ViewModel() {
         }
     }
 
-    private fun startTimer() {
-        timerJob?.cancel()
-        timerJob = viewModelScope.launch {
-            while (_uiState.value.remainingTime > 0 && _uiState.value.isGameActive) {
-                delay(1000)
-                _uiState.value = _uiState.value.copy(remainingTime = _uiState.value.remainingTime - 1)
-            }
-            if (_uiState.value.remainingTime <= 0) {
-                _uiState.value = _uiState.value.copy(
-                    isGameActive = false,
-                    isGameOver = true
-                )
-            }
-        }
-    }
 }
