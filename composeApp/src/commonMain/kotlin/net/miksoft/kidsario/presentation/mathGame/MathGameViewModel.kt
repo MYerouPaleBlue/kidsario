@@ -101,13 +101,22 @@ class MathGameViewModel : ViewModel() {
         val isCorrect = option.isCorrect
         val newScore = if (isCorrect) _uiState.value.score + 1 else _uiState.value.score
         val highScore = maxOf(_uiState.value.highScore, newScore)
-        _uiState.value = _uiState.value.copy(
-            score = newScore,
-            highScore = highScore,
-            lastResultCorrect = isCorrect,
-            isRefreshing = true
-        )
-        refreshRound()
+        if (isCorrect) {
+            _uiState.value = _uiState.value.copy(
+                score = newScore,
+                highScore = highScore,
+                lastResultCorrect = true,
+                isRefreshing = true
+            )
+            refreshRound()
+        } else {
+            _uiState.value = _uiState.value.copy(
+                score = newScore,
+                highScore = highScore,
+                lastResultCorrect = false,
+                isRefreshing = false
+            )
+        }
     }
 
     fun playAgain() {
@@ -142,6 +151,7 @@ class MathGameViewModel : ViewModel() {
             _uiState.value = _uiState.value.copy(
                 currentProblem = problem,
                 options = options,
+                lastResultCorrect = null,
                 isRefreshing = false,
                 currentAnimal = animals.random()
             )
